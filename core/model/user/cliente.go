@@ -23,8 +23,8 @@ type Cliente struct {
 	Rol          int        `json:"rol"`
 }
 
-type ClienteAuth struct {
-	ClientId  string `json:"id,omitempty"`
+type 	UserAuth struct {
+	Id        string `json:"id,omitempty"`
 	Email     string `json:"email,omitempty"`
 	Estado    int    `json:"estado"`
 	Rol       int    `json:"rol"`
@@ -52,19 +52,20 @@ type ClienteResponse struct {
 }
 
 type UserShortInfo struct {
-	Id        string `json:"id"`
-	Nombre    string `json:"nombre"`
-	Pendiente bool   `json:"pendiente"`
-	IsAdmin   bool   `json:"is_admin"`
-	Email     *string `json:"email"`
-	Photo     *string `json:"photo"`
-	Estado    int    `json:"estado"`
+	Id        string     `json:"id"`
+	Nombre    string     `json:"nombre"`
+	Pendiente bool       `json:"pendiente"`
+	IsAdmin   bool       `json:"is_admin"`
+	Email     *string    `json:"email"`
+	Photo     *string    `json:"photo"`
+	Estado    int        `json:"estado"`
+	DateTime  *time.Time `json:"datetime"`
 }
 
 type UserArea struct {
-	Id string `json:"id"`
-	Nombre    string `json:"nombre"`
-	Estado    int    `json:"estado"`
+	Id     string `json:"id"`
+	Nombre string `json:"nombre"`
+	Estado int    `json:"estado"`
 	// AreaId    int    `json:"area_id"`
 }
 

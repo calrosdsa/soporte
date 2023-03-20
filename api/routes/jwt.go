@@ -11,28 +11,28 @@ import (
 )
 
 type Claims struct {
-	UserId string `json:"user_id"`
-	Rol    int    `json:"rol"`
-	Empresa int   `json:"empresa_id"`
+	UserId  string `json:"user_id"`
+	Rol     int    `json:"rol"`
+	Empresa int    `json:"empresa_id"`
 	jwt.RegisteredClaims
 }
 
 type ClaimsInvitation struct {
-	Id string `json:"superior_id"`
-	Rol    int    `json:"rol"`
-	EmpresaId int   `json:"empresa_id"`
+	Id        string `json:"superior_id"`
+	Rol       int    `json:"rol"`
+	EmpresaId int    `json:"empresa_id"`
+	Email     string `json:"email"`
 	jwt.RegisteredClaims
 }
 
-
 var sampleSecretKey = []byte(viper.GetString("JWT_SECRET"))
 
-
-func GenerateInvitationJWT(id string, rol int,empresaId int) (string, error) {
+func GenerateInvitationJWT(id *string, rol *int, empresaId *int, email *string) (string, error) {
 	claims := &ClaimsInvitation{
-		Id: id,
-		Rol:    rol,
-		EmpresaId: empresaId,
+		Id:        *id,
+		Rol:       *rol,
+		EmpresaId: *empresaId,
+		Email:     *email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
@@ -57,17 +57,17 @@ func ExtractClaimsInvitation(tokenString string) (*ClaimsInvitation, error) {
 	return claims, err
 }
 
-
-func GenerateJWT(userId string, rol int,empresaId int) (string, error) {
+func GenerateJWT(userId string, rol int, empresaId int) (string, error) {
 	claims := &Claims{
-		UserId: userId,
-		Rol:    rol,
+		UserId:  userId,
+		Rol:     rol,
 		Empresa: empresaId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(100 * time.Hour)),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
 	tokenString, err := token.SignedString(sampleSecretKey)
 	if err != nil {
 		return "", err

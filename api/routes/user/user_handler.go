@@ -2,6 +2,7 @@ package routes
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,9 +11,13 @@ import (
 
 	// errorType "soporte-go/data/model"
 	"soporte-go/core/model/user"
+	// "soporte-go/core/repository"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
+
+	r "soporte-go/api/routes"
+	"soporte-go/core/model"
 	// "github.com/sirupsen/logrus"
 	// validator "gopkg.in/go-playground/validator.v9"
 )
@@ -31,116 +36,127 @@ func NewUserHandler(e *echo.Echo, us user.UserUseCases) {
 	e.POST("user/update-funcionario/:funcionarioId/", handler.UpdateCliente)
 	e.GET("user/funcionario/:funcionarioId/", handler.GetClienteById)
 	e.GET("user/funcionarios/", handler.GetClientes)
-	e.GET("user/clientes-area/:areaId/",handler.GetClientesByArea)
-	e.POST("user/register-invitation/",handler.UserRegisterInvitation)
-	e.GET("user/user-list/",handler.GetUserList)
-	e.GET("user/validate-email/:email/",handler.ValidateEmail)
+	e.GET("user/clientes-area/:areaId/", handler.GetClientesByArea)
+	e.POST("user/register-invitation/", handler.UserRegisterInvitation)
+	e.GET("user/user-list/", handler.GetUserList)
+	e.GET("user/validate-email/:email/", handler.ValidateEmail)
 	e.GET("user/resend-email/", handler.ResendEmail)
-	e.GET("user/cancel-invitation/",handler.CancelInvitation)
-	e.GET("user/search/",handler.SearchUser)
-	e.GET("user/cliente-filtered/:areaId/",handler.GetUserFiltered)
+	e.GET("user/cancel-invitation/", handler.CancelInvitation)
+	e.GET("user/search/", handler.SearchUser)
+	e.GET("user/add-user-list/:areaId/", handler.GetUserFiltered)
 }
 
-func (a *UserHandler)GetUserFiltered(c echo.Context)(err error){
+func (a *UserHandler) GetUserFiltered(c echo.Context) (err error) {
 	token := c.Request().Header["Authorization"][0]
-	areaId :=  c.Param("areaId")
-	id,_ := strconv.Atoi(areaId)
-	_, err = ExtractClaims(token)
+	areaId := c.Param("areaId")
+	id, _ := strconv.Atoi(areaId)
+	claims, err := r.ExtractClaims(token)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	ctx := c.Request().Context()
-	res,err := a.UserUcase.GetClientesFiltered(ctx,id)
+	res, err := a.UserUcase.GetUserAddList(ctx,&id, &claims.Rol,&claims.UserId)
 	if err != nil {
-		return c.JSON(getStatusCode(err), ResponseError{Message: err.Error()})
-	}
-	return c.JSON(http.StatusOK,res)	
-}
-
-func (a *UserHandler)SearchUser(c echo.Context)(err error){
-	token := c.Request().Header["Authorization"][0]
-	claims, err := ExtractClaims(token)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ResponseError{Message: err.Error()})
-	}
-	q := c.QueryParam("search")
-	ctx := c.Request().Context()
-	res,err := a.UserUcase.SearchUser(ctx,claims.UserId,q)
-	if err != nil {
-		return c.JSON(getStatusCode(err), ResponseError{Message: err.Error()})
-	}
-	return c.JSON(http.StatusOK,res)
-}
-
-func (a *UserHandler)CancelInvitation(c echo.Context)(err error){
-	token := c.Request().Header["Authorization"][0]
-	_, err = ExtractClaims(token)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ResponseError{Message: err.Error()})
-	}
-	m := c.QueryParam("email")
-	log.Println(m)
-	ctx := c.Request().Context()
-	err = a.UserUcase.DeleteInvitation(ctx,m)
-	if err != nil {
-		return c.JSON(getStatusCode(err), ResponseError{Message: err.Error()})
-	}
-	return c.JSON(http.StatusOK,nil)
-}
-
-func (a *UserHandler)ResendEmail(c echo.Context)(err error){
-	token := c.Request().Header["Authorization"][0]
-	m := c.QueryParam("email")
-	ad := c.QueryParam("isAdmin")
-	claims, err := ExtractClaims(token)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ResponseError{Message: err.Error()})
-	}
-	var rol int
-	if ad == "true"{
-		rol = 2	
-	}else{
-		rol = 0
-	}
-	tokenInvitation,err := GenerateInvitationJWT(claims.UserId,rol,claims.Empresa)
-	if err != nil {
-		return c.JSON(http.StatusUnprocessableEntity, err.Error())
-	}
-	url := fmt.Sprintf("http://localhost:3000/auth/registro?auth=%s", tokenInvitation)
-	a.UserUcase.ReSendEmail([]string{m},url)
-	return c.JSON(http.StatusOK,nil)
-
-}
-
-func(a *UserHandler)ValidateEmail(c echo.Context)(err error){
-	m := c.Param("email")
-	ctx := c.Request().Context()
-	err = a.UserUcase.ValidateEmail(ctx,m)
-	if err != nil {
-		return c.JSON(http.StatusConflict, ResponseError{Message: err.Error()})
-	}
-	return c.JSON(http.StatusOK,"")
-}
-
-func (a *UserHandler)GetUserList(c echo.Context)(err error){
-	token := c.Request().Header["Authorization"][0]
-	claims, err := ExtractClaims(token)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ResponseError{Message: err.Error()})
-	}
-	ctx := c.Request().Context()
-	res,err := a.UserUcase.GetUsersShortIInfo(ctx,claims.UserId)
-	if err != nil {
-		return c.JSON(getStatusCode(err), ResponseError{Message: err.Error()})
+		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, res)
 }
 
-func (a *UserHandler) UserRegisterInvitation(c echo.Context) (err error){
+func (a *UserHandler) SearchUser(c echo.Context) (err error) {
 	token := c.Request().Header["Authorization"][0]
-	claims, err := ExtractClaims(token)
+	claims, err := r.ExtractClaims(token)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
+	q := c.QueryParam("search")
+	ctx := c.Request().Context()
+	res, err := a.UserUcase.SearchUser(ctx, claims.UserId, q)
+	if err != nil {
+		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
+func (a *UserHandler) CancelInvitation(c echo.Context) (err error) {
+	token := c.Request().Header["Authorization"][0]
+	_, err = r.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
+	m := c.QueryParam("email")
+	log.Println(m)
+	ctx := c.Request().Context()
+	err = a.UserUcase.DeleteInvitation(ctx, m)
+	if err != nil {
+		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
+	}
+	return c.JSON(http.StatusOK, nil)
+}
+
+func (a *UserHandler) ResendEmail(c echo.Context) (err error) {
+	token := c.Request().Header["Authorization"][0]
+	m := c.QueryParam("email")
+	ad := c.QueryParam("isAdmin")
+	claims, err := r.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
+	var rol int
+
+	if claims.Rol == int(model.RoleClienteAdmin) {
+		if ad == "true" {
+			rol = 2
+		} else {
+			rol = 0
+		}
+	} else if claims.Rol == int(model.RoleFuncionarioAdmin) {
+		if ad == "true" {
+			rol = 3
+		} else {
+			rol = 1
+		}
+	} else {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: errors.New("no rol presente en jwt token").Error()})
+	}
+	tokenInvitation, err := r.GenerateInvitationJWT(&claims.UserId, &rol, &claims.Empresa, &m)
+	if err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, err.Error())
+	}
+	url := fmt.Sprintf("http://localhost:3000/auth/registro?auth=%s", tokenInvitation)
+	a.UserUcase.ReSendEmail([]string{m}, url)
+	return c.JSON(http.StatusOK, nil)
+
+}
+
+func (a *UserHandler) ValidateEmail(c echo.Context) (err error) {
+	m := c.Param("email")
+	ctx := c.Request().Context()
+	err = a.UserUcase.ValidateEmail(ctx, m)
+	if err != nil {
+		return c.JSON(http.StatusConflict, model.ResponseError{Message: err.Error()})
+	}
+	return c.JSON(http.StatusOK, "")
+}
+
+func (a *UserHandler) GetUserList(c echo.Context) (err error) {
+	token := c.Request().Header["Authorization"][0]
+	claims, err := r.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
+	ctx := c.Request().Context()
+	res, err := a.UserUcase.GetUsersShortIInfo(ctx, &claims.UserId, &claims.Rol)
+	if err != nil {
+		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
+func (a *UserHandler) UserRegisterInvitation(c echo.Context) (err error) {
+	token := c.Request().Header["Authorization"][0]
+	claims, err := r.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	var to user.UserRegistrationRequest
 	err = c.Bind(&to)
@@ -148,38 +164,46 @@ func (a *UserHandler) UserRegisterInvitation(c echo.Context) (err error){
 		return c.JSON(http.StatusUnprocessableEntity, err.Error())
 	}
 	var rol int
-	if to.IsAdmin{
-		rol = 2	
-	}else{
-		rol = 0
+	// log.Println("rol",claims.Rol)
+	if claims.Rol == int(model.RoleClienteAdmin) {
+		if to.IsAdmin {
+			rol = 2
+		} else {
+			rol = 0
+		}
+	} else if claims.Rol == int(model.RoleFuncionarioAdmin) {
+		if to.IsAdmin {
+			rol = 3
+		} else {
+			rol = 1
+		}
+	} else {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: errors.New("no rol presente en jwt token").Error()})
 	}
-	log.Println(rol)
-	tokenInvitation,err := GenerateInvitationJWT(claims.UserId,rol,claims.Empresa)
+	// log.Println(rol)
 	if err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, err.Error())
 	}
-	url := fmt.Sprintf("http://localhost:3000/auth/registro?auth=%s", tokenInvitation)
 	ctx := c.Request().Context()
-	res,err := a.UserUcase.UserRegisterInvitation(ctx,url,to,claims.UserId)
+	res, err := a.UserUcase.UserRegisterInvitation(ctx, &to, &claims.UserId, &rol, &claims.Empresa)
 	// log.Println(url)
 	if err != nil {
-		return c.JSON(getStatusCode(err), ResponseError{Message: err.Error()})
+		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, res)
-	
-}
 
+}
 
 func (u *UserHandler) GetClientesByArea(c echo.Context) (err error) {
 	idS := c.Param("areaId")
-	id,err := strconv.Atoi(idS)
+	id, err := strconv.Atoi(idS)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, model.ResponseError{Message: err.Error()})
 	}
 	ctx := c.Request().Context()
-	res, err := u.UserUcase.GetClientesByArea(ctx,id)
+	res, err := u.UserUcase.GetClientesByArea(ctx, id)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, model.ResponseError{Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -217,7 +241,7 @@ func (u *UserHandler) UpdateFuncionario(c echo.Context) (err error) {
 	ctx := c.Request().Context()
 	err = u.UserUcase.UpdateFuncionario(ctx, columns, values...)
 	if err != nil {
-		return c.JSON(getStatusCode(err), ResponseError{Message: err.Error()})
+		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
 	}
 
 	return c.JSON(http.StatusCreated, "okk")
@@ -225,12 +249,12 @@ func (u *UserHandler) UpdateFuncionario(c echo.Context) (err error) {
 
 func (u *UserHandler) GetClientes(c echo.Context) (err error) {
 	token := c.Request().Header["Authorization"][0]
-	claims, err := ExtractClaims(token)
+	claims, err := r.ExtractClaims(token)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	ctx := c.Request().Context()
-	res, err := u.UserUcase.GetClientes(ctx,claims.UserId)
+	res, err := u.UserUcase.GetClientes(ctx, &claims.UserId, &claims.Rol)
 	if err != nil {
 		logrus.Error(err)
 	}
@@ -239,14 +263,14 @@ func (u *UserHandler) GetClientes(c echo.Context) (err error) {
 
 func (u *UserHandler) GetClienteById(c echo.Context) (err error) {
 	token := c.Request().Header["Authorization"][0]
-	_, err = ExtractClaims(token)
+	claims, err := r.ExtractClaims(token)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 
 	id := c.Param("clienteId")
 	ctx := c.Request().Context()
-	res, err := u.UserUcase.GetClienteById(ctx, id)
+	res, err := u.UserUcase.GetUserById(ctx, &id, &claims.Rol)
 	if err != nil {
 		logrus.Error(err)
 	}
@@ -259,9 +283,9 @@ func (u *UserHandler) UpdateCliente(c echo.Context) (err error) {
 	// var cliente user.Cliente
 	clientId := c.QueryParam("userId")
 	token := c.Request().Header["Authorization"][0]
-	_, err = ExtractClaims(token)
+	_, err = r.ExtractClaims(token)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 
 	var json map[string]interface{} = map[string]interface{}{}
@@ -285,7 +309,7 @@ func (u *UserHandler) UpdateCliente(c echo.Context) (err error) {
 	ctx := c.Request().Context()
 	err = u.UserUcase.UpdateCliente(ctx, columns, values...)
 	if err != nil {
-		return c.JSON(getStatusCode(err), ResponseError{Message: err.Error()})
+		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
 	}
 
 	return c.JSON(http.StatusCreated, "okk")

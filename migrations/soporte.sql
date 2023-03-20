@@ -11,8 +11,8 @@ CREATE TABLE users (
     user_id uuid DEFAULT uuid_generate_v4 (),
     username VARCHAR ( 50 ) UNIQUE NOT NULL,
     password TEXT NOT NULL,
-    last_login TIMESTAMP,
     created_on TIMESTAMP NOT NULL,
+    last_login TIMESTAMP,
     email VARCHAR ( 50 ) UNIQUE NOT NULL,
     estado INT DEFAULT 0,
     PRIMARY KEY (user_id)
@@ -24,6 +24,7 @@ CREATE TABLE if not exists invitaciones(
     pendiente BOOLEAN DEFAULT TRUE,
     is_admin BOOLEAN DEFAULT FALSE,
     creador_id VARCHAR NOT NULL,
+    send_on TIMESTAMP NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -105,6 +106,7 @@ create table if not exists funcionarios (
     estado INT DEFAULT 0,
     areas INT[],
     profile_photo TEXT,
+    is_admin BOOLEAN DEFAULT false,
     rol INT,
     PRIMARY KEY (funcionario_id)
 );

@@ -12,8 +12,8 @@ type LoginRequest struct {
 }
 
 type AuthenticationResponse struct {
-	Token string `json:"access_token"`
-	User  user.ClienteAuth   `json:"user"`
+	Token string        `json:"access_token"`
+	User  user.UserAuth `json:"user"`
 }
 
 type RegisterAuthResponse struct {
@@ -45,19 +45,20 @@ type User struct {
 
 type AccountUseCase interface {
 	// Fetch(ctx context.Context,  num int64) ([]User, string, error)
-	Login(ctx context.Context, loginRequest *LoginRequest) (user.ClienteAuth, error)
+	Login(ctx context.Context, loginRequest *LoginRequest) (user.UserAuth, error)
 	// Update(ctx context.Context, ar *User) error
 	RegisterCliente(context.Context, *RegisterForm) (user.ClienteResponse, error)
-	RegisterFuncionario(context.Context, *RegisterForm, string) (user.FuncionarioResponse, error)
+	RegisterFuncionario(context.Context, *RegisterForm) (user.UserAuth, error)
 	DeleteUser(context.Context, string) (err error)
 }
 
 // ArticleRepository represent the article's repository contract
 type AccountRepository interface {
 	// Fetch(ctx context.Context, num int64) (res []User, err error)
-	Login(ctx context.Context, loginRequest *LoginRequest) (res user.ClienteAuth, err error)
+	Login(ctx context.Context, loginRequest *LoginRequest) (res user.UserAuth, err error)
 	// Update(ctx context.Context, ar *User) error
 	RegisterCliente(context.Context, *RegisterForm) (user.ClienteResponse, error)
-	RegisterFuncionario(context.Context, *RegisterForm, string) (user.FuncionarioResponse, error)
+	RegisterFuncionario(context.Context, *RegisterForm) (user.UserAuth, error)
 	DeleteUser(context.Context, string) (err error)
+	// ValidateInvitation(ctx context.Context,mail *string,rol *int)(error)
 }

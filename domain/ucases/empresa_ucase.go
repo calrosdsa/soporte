@@ -19,6 +19,13 @@ func NewEmpresaUseCase(uc empresa.EmpresaRepository, timeout time.Duration) empr
 	}
 }
 
+func (uc *empresaUseCase) AreaChangeState(ctx context.Context,state int,id int)(err error){
+	ctx,cancel := context.WithTimeout(ctx,uc.contextTimeout)
+	defer cancel()
+	err = uc.empresaRepo.AreaChangeState(ctx,state,id)
+	return err
+}
+
 func (uc *empresaUseCase) GetAreaByName(ctx context.Context,n string) (res empresa.Area,err error){
 	ctx, cancel := context.WithTimeout(ctx,uc.contextTimeout)
 	defer cancel()
@@ -26,11 +33,11 @@ func (uc *empresaUseCase) GetAreaByName(ctx context.Context,n string) (res empre
 	return 
 }
 
-func (uc *empresaUseCase) AddUserToArea(ctx context.Context,a empresa.AddUserRequestData)(err error){
+func (uc *empresaUseCase) AddUserToArea(ctx context.Context,a *empresa.AddUserRequestData)(err error){
 	ctx,cancel := context.WithTimeout(ctx,uc.contextTimeout)
 	defer cancel()
 	for _,value := range a.Users{
-		err = uc.empresaRepo.AddUserToArea(ctx,value.Id,value.Name,a)
+		err = uc.empresaRepo.AddUserToArea(ctx,&value.Id,&value.Name,a)
 	}
 	return
 }
@@ -42,10 +49,10 @@ func (uc *empresaUseCase) GetAreasUser(ctx context.Context, userId string) (res 
 	return
 }
 
-func (uc *empresaUseCase) GetAreasUserAdmin(ctx context.Context, userId string) (res []empresa.Area, err error) {
+func (uc *empresaUseCase) GetAreasUserAdmin(ctx context.Context, userId *string,rol *int) (res []empresa.Area, err error) {
 	ctx,cancel := context.WithTimeout(ctx,uc.contextTimeout)
 	defer cancel()
-	res ,err = uc.empresaRepo.GetAreasUserAdmin(ctx,userId)
+	res ,err = uc.empresaRepo.GetAreasUserAdmin(ctx,userId,rol)
 	return
 }
 
@@ -56,10 +63,10 @@ func (uc *empresaUseCase) StoreEmpresa(ctx context.Context, empresa *empresa.Emp
 	return
 }
 
-func (uc *empresaUseCase) StoreArea(ctx context.Context, area *empresa.Area) (id int,err error) {
+func (uc *empresaUseCase) StoreArea(ctx context.Context, area *empresa.Area,rol *int) (id int,err error) {
 	ctx,cancel := context.WithTimeout(ctx,uc.contextTimeout)
 	defer cancel()
-	id,err = uc.empresaRepo.StoreArea(ctx,area)
+	id,err = uc.empresaRepo.StoreArea(ctx,area,rol)
 	if err != nil {
 		return id,err
 	}

@@ -3,6 +3,7 @@ package ucases
 import (
 	"context"
 	"log"
+	"soporte-go/core/model"
 	"soporte-go/core/model/caso"
 
 	"time"
@@ -37,10 +38,14 @@ func (uc *casoUseCase) GetCaso(ctx context.Context, id string) (res caso.Caso, e
 	return
 }
 
-func (uc *casoUseCase) GetCasosUser(ctx context.Context, id string, query *caso.CasoQuery) (res []caso.Caso, size int, err error) {
+func (uc *casoUseCase) GetCasosUser(ctx context.Context, id *string, query *caso.CasoQuery,rol *int) (res []caso.Caso, size int, err error) {
 	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
 	defer cancel()
-	res, size, err = uc.casoRepo.GetCasosUser(ctx, id, query)
+	if model.IsClienteRol(rol){
+		res, size, err = uc.casoRepo.GetCasosCliente(ctx, id, query)
+	}else if{
+		res, size, err = uc.casoRepo.GetCasosFuncionario(ctx, id, query)
+	}
 	return
 }
 

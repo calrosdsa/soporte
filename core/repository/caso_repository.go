@@ -33,8 +33,8 @@ func NewPgCasoRepository(conn *pgxpool.Pool, ctx context.Context) caso.CasoRepos
 func (p *pgCasoRepository) AsignarFuncionario(ctx context.Context,id string,idF string)(err error){
 	query := `update casos set funcionario_id = $1,funcionario_name = 'Jorge M' where id = $2;`
 	_,err = p.Conn.Exec(ctx,query,idF,id)
-	return
-}
+	return err
+}	
 
 func (p *pgCasoRepository) GetCaso(ctx context.Context, id string) (res caso.Caso, err error) {
 	log.Println(id)
@@ -51,18 +51,34 @@ func (p *pgCasoRepository) GetCaso(ctx context.Context, id string) (res caso.Cas
 	return
 }
 
-func (p *pgCasoRepository) GetCasosUser(ctx context.Context, id string,query *caso.CasoQuery) (list []caso.Caso,size int,err error) {
-	var count int
-	query2 := `select * from casos where client_id = $1 limit 10 offset $2;`
-	if query.Page == 1 || query.Page == 0 {
-		list, err = p.fetchCasos(ctx, query2, id,0)
-	}else{
-		page := query.Page - 1
-		list, err = p.fetchCasos(ctx, query2, id,page * 10)
-	}
-	query3 := `select count(*) from casos where client_id = $1;`
-	err = p.Conn.QueryRow(ctx,query3,id).Scan(&count)
-	size = count
+func (p *pgCasoRepository) GetCasosCliente(ctx context.Context, id *string,query *caso.CasoQuery) (list []caso.Caso,size int,err error) {
+	var count int	
+		query2 := `select * from casos where client_id = $1 limit 10 offset $2;`
+		if query.Page == 1 || query.Page == 0 {
+		list, _ = p.fetchCasos(ctx, query2, id,0)
+		}else{
+			page := query.Page - 1
+			list, _ = p.fetchCasos(ctx, query2, id,page * 10)
+		}
+		query3 := `select count(*) from casos where client_id = $1;`
+		err = p.Conn.QueryRow(ctx,query3,id).Scan(&count)
+		size = count
+	return 
+	// return []caso.Caso{},nil
+}
+
+func (p *pgCasoRepository) GetCasosFuncionario(ctx context.Context, id *string,query *caso.CasoQuery) (list []caso.Caso,size int,err error) {
+	var count int	
+		query2 := `select * from casos where funcionario_id = $1 limit 10 offset $2;`
+		if query.Page == 1 || query.Page == 0 {
+		list, _ = p.fetchCasos(ctx, query2, id,0)
+		}else{
+			page := query.Page - 1
+			list, _ = p.fetchCasos(ctx, query2, id,page * 10)
+		}
+		query3 := `select count(*) from casos where client_id = $1;`
+		err = p.Conn.QueryRow(ctx,query3,id).Scan(&count)
+		size = count
 	return 
 	// return []caso.Caso{},nil
 }

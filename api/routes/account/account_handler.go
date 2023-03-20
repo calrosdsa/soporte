@@ -1,25 +1,22 @@
-package routes
+package account
 
 import (
 	"errors"
-	
+
 	"log"
 	"net/http"
-	
 
 	// "strconv"
-	errorType "soporte-go/core/model"
+	"soporte-go/core/model"
 	"soporte-go/core/model/account"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 
+	r "soporte-go/api/routes"
+
 	validator "gopkg.in/go-playground/validator.v9"
 )
-
-type ResponseError struct {
-	Message string `json:"message"`
-}
 
 // ArticleHandler  represent the httphandler for article
 type AccountHandler struct {
@@ -35,55 +32,55 @@ func NewAccountHandler(e *echo.Echo, us account.AccountUseCase) {
 		AUsecase: us,
 	}
 	e.POST("account/register-cliente/", handler.RegisterCliente)
-	e.POST("account/register-funcionario/",handler.RegisterFuncionario)
-	e.POST("account/register-cliente-admin/",handler.RegisterClienteAdministrador)
+	e.POST("account/register-funcionario/", handler.RegisterFuncionario)
+	e.POST("account/register-cliente-admin/", handler.RegisterClienteAdministrador)
 	e.POST("account/login/", handler.Login)
-	e.GET("account/delete-user/",handler.DeleteUser)
+	e.GET("account/delete-user/", handler.DeleteUser)
 }
 
-func(a *AccountHandler) DeleteUser(c echo.Context)( err error){
+func (a *AccountHandler) DeleteUser(c echo.Context) (err error) {
 	token := c.Request().Header["Authorization"][0]
-	_, err = ExtractClaims(token)
+	_, err = r.ExtractClaims(token)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	id := c.QueryParam("id")
 	ctx := c.Request().Context()
-	err = a.AUsecase.DeleteUser(ctx,id)
+	err = a.AUsecase.DeleteUser(ctx, id)
 	if err != nil {
-		return c.JSON(getStatusCode(err), ResponseError{Message: err.Error()})
+		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, nil)
 }
 
 func (a *AccountHandler) RegisterClienteAdministrador(c echo.Context) (err error) {
 	token := c.Request().Header["Authorization"][0]
-	claims, err := ExtractClaims(token)
+	claims, err := r.ExtractClaims(token)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
-	if claims.Rol != 3 && claims.Rol !=2 {
-		return c.JSON(http.StatusUnauthorized, ResponseError{
-			Message: errors.New("No tiene los permisos para registrar").Error()})
+	if claims.Rol != 3 && claims.Rol != 2 {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{
+			Message: errors.New("no tiene los permisos para registrar").Error()})
 	}
 	var user account.RegisterForm
 	err = c.Bind(&user)
 	if err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, err.Error())
 	}
-	
+
 	var ok bool
 	if ok, err = isRequestValid(&user); !ok {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 	user.Rol = 2
 	user.EmpresaId = claims.Empresa
-	// token,err := jwt.GenerateJWT(user.)
+	// token,err := jwt.r.GenerateJWT(user.)
 	// log.Println(user)
 	ctx := c.Request().Context()
 	res, err := a.AUsecase.RegisterCliente(ctx, &user)
 	if err != nil {
-		return c.JSON(getStatusCode(err), ResponseError{Message: err.Error()})
+		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
 	}
 	return c.JSON(http.StatusCreated, res)
 }
@@ -102,9 +99,9 @@ func (a *AccountHandler) Login(c echo.Context) (err error) {
 	res, err := a.AUsecase.Login(ctx, &loginRequest)
 	if err != nil {
 		logrus.Error(err)
-		return c.JSON(getStatusCode(err), ResponseError{Message: err.Error()})
+		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
 	}
-	token, err := GenerateJWT(res.ClientId, res.Rol,res.EmpresaId)
+	token, err := r.GenerateJWT(res.Id, res.Rol, res.EmpresaId)
 	if err != nil {
 		log.Println(err)
 	}
@@ -116,19 +113,22 @@ func (a *AccountHandler) Login(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, response)
 }
 
-
 func (a *AccountHandler) RegisterFuncionario(c echo.Context) (err error) {
-	token := c.Request().Header["Authorization"][0]
-	claims, err := ExtractClaims(token)
+	tokenInvitation := c.Request().Header["Authorization"][0]
+	claims, err := r.ExtractClaimsInvitation(tokenInvitation)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
-	if claims.Rol != 3 {
-		return c.JSON(http.StatusUnauthorized, ResponseError{
-			Message: errors.New("No tiene los permisos para registrar").Error()})
-	}
+	// if claims.Rol != 3 {
+	// 	return c.JSON(http.StatusUnauthorized, model.ResponseError{
+	// 		Message: errors.New("no tiene los permisos para registrar").Error()})
+	// }
 	var user account.RegisterForm
-	user.Rol = 1
+	user.Rol = claims.Rol
+	user.EmpresaId = claims.EmpresaId
+	user.SuperiorId = claims.Id
+	user.Email = &claims.Email
+	// log.Println(claims.Id)
 	err = c.Bind(&user)
 	if err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, err.Error())
@@ -138,21 +138,29 @@ func (a *AccountHandler) RegisterFuncionario(c echo.Context) (err error) {
 	if ok, err = isRequestValid(&user); !ok {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	// token,err := jwt.GenerateJWT(user.)
+	// token,err := jwt.r.GenerateJWT(user.)
 	// log.Println(user)
 	ctx := c.Request().Context()
-	res, err := a.AUsecase.RegisterFuncionario(ctx, &user, claims.UserId)
+	res, err := a.AUsecase.RegisterFuncionario(ctx, &user)
 	if err != nil {
-		return c.JSON(getStatusCode(err), ResponseError{Message: err.Error()})
+		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
 	}
-	return c.JSON(http.StatusCreated, res)
+	token, err := r.GenerateJWT(res.Id, res.Rol, res.EmpresaId)
+	if err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, err.Error())
+	}
+	response := account.AuthenticationResponse{
+		Token: token,
+		User:  res,
+	}
+	return c.JSON(http.StatusCreated, response)
 }
 
 func (a *AccountHandler) RegisterCliente(c echo.Context) (err error) {
 	token := c.Request().Header["Authorization"][0]
-	claimsInvitation, err := ExtractClaimsInvitation(token)
+	claimsInvitation, err := r.ExtractClaimsInvitation(token)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	// if claims.Rol == 0 {
 	// 	return c.JSON(http.StatusUnauthorized, ResponseError{
@@ -177,15 +185,15 @@ func (a *AccountHandler) RegisterCliente(c echo.Context) (err error) {
 	res, err := a.AUsecase.RegisterCliente(ctx, &userForm)
 	res.Rol = claimsInvitation.Rol
 	if err != nil {
-		return c.JSON(http.StatusUnprocessableEntity, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusUnprocessableEntity, model.ResponseError{Message: err.Error()})
 	}
-	token,err = GenerateJWT(*res.UserId,userForm.Rol,userForm.EmpresaId)
+	token, err = r.GenerateJWT(*res.UserId, userForm.Rol, userForm.EmpresaId)
 	if err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, err.Error())
 	}
 	response := account.RegisterAuthResponse{
 		Access: token,
-		User: res,
+		User:   res,
 	}
 	return c.JSON(http.StatusCreated, response)
 }
@@ -197,23 +205,4 @@ func isRequestValid[T ValidData](m T) (bool, error) {
 		return false, err
 	}
 	return true, nil
-}
-
-func getStatusCode(err error) int {
-	if err == nil {
-		return http.StatusOK
-	}
-
-	logrus.Error(err)
-	switch err {
-
-	case errorType.ErrInternalServerError:
-		return http.StatusInternalServerError
-	case errorType.ErrNotFound:
-		return http.StatusNotFound
-	case errorType.ErrConflict:
-		return http.StatusConflict
-	default:
-		return http.StatusInternalServerError
-	}
 }
