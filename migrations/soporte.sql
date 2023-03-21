@@ -53,22 +53,14 @@ CREATE TABLE if not exists empresas (
     id serial primary key,
     slug VARCHAR UNIQUE NOT NULL,
     nombre VARCHAR UNIQUE NOT NULL,
-    telefono VARCHAR UNIQUE NOT NULL,
+    telefono VARCHAR UNIQUE NOT NULL    ,
     estado INT DEFAULT 0,
     created_on TIMESTAMP NOT NULL,
     updated_on TIMESTAMP
+    parent_id INT,
 );
 
-create table if not exists areas (
-    id serial primary key,
-    nombre VARCHAR  NOT NULL,
-    -- descripcion TEXT,
-    estado INT DEFAULT 0,
-    empresa_id INT NOT NULL,
-    -- empresa_name INT NOT NULL,
-    created_on TIMESTAMP NOT NULL,
-    creador_id VARCHAR NOT NULL
-);
+
 
 create table if not exists clientes (
     client_id uuid DEFAULT uuid_generate_v4(),
@@ -107,8 +99,25 @@ create table if not exists funcionarios (
     areas INT[],
     profile_photo TEXT,
     is_admin BOOLEAN DEFAULT false,
-    rol INT,
-    PRIMARY KEY (funcionario_id)
+    rol INT
+);
+
+create table if not exists areas_cl_admin (
+    id serial primary key,
+    nombre VARCHAR  NOT NULL,
+    estado INT DEFAULT 0,
+    empresa_id INT NOT NULL,
+    created_on TIMESTAMP NOT NULL,
+    creador_id VARCHAR
+);
+
+create table if not exists areas (
+    id serial primary key,
+    nombre VARCHAR  NOT NULL,
+    estado INT DEFAULT 0,
+    empresa_id INT NOT NULL,
+    created_on TIMESTAMP NOT NULL,
+    creador_id VARCHAR
 );
 
 create table if not exists user_area (
@@ -116,7 +125,8 @@ create table if not exists user_area (
     area_id int NOT NULL,
     estado int DEFAULT 0,
     nombre_user VARCHAR NOT NULL,
-    nombre_area VARCHAR NOT NULL
+    nombre_area VARCHAR NOT NULL,
+    PRIMARY KEY (user_id)
 );
 
 -- create table if not exists user_area (

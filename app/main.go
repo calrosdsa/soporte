@@ -3,7 +3,9 @@ package main
 import (
 	// "bytes"
 	"context"
+	"database/sql"
 	"fmt"
+	"log"
 	"os"
 	initApp "soporte-go/api"
 
@@ -23,33 +25,24 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-
 	// if viper.GetBool(`debug`) {
 	// 	log.Println("Service RUN on DEBUG mode")
 	// }
 }
 
-// var auth smtp.Auth
-
-// func SmtpEmial() {
-// 	auth = smtp.PlainAuth("", "jorgemiranda0180@gmail.com", "opcpmdfaqrhtwwws", "smtp.gmail.com")
-// 	t,_ := template.ParseFiles("templates/reset_password.html")
-// 	var body bytes.Buffer
-// 	headers := "MIME-version: 1.0;\nContent-Type: text/html;"
-// 	body.Write([]byte(fmt.Sprintf("Subject: yourSubject\n%s\n\n",headers)))
-// 	t.Execute(&body,struct{
-// 		Name  string
-// 		URL  string
-// 	}{
-// 		Name: "AMAMAM",
-// 		URL: "google.com",
-// 	})
-// 	smtp.SendMail("smtp.gmail.com:587",auth,"jorgemiranda0180@gmail.com",[]string{"alejandro12ab34cd@gmail.com"},body.Bytes())
-// }
+const (
+	host     = "localhost"
+	port     = 5432
+	user     = "postgres"
+	password = "12ab34cd56ef"
+	dbname   = "soporte"
+)
 
 func main() {
 	// SmtpEmial()
-	
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
 	creds := credentials.NewStaticCredentials(viper.GetString("AWS_ID"), viper.GetString("AWS_SECRET"), "")
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("sa-east-1"),
@@ -58,18 +51,22 @@ func main() {
 	if err != nil {
 		exitErrorf("%v", err)
 	}
+	db2, err := sql.Open("postgres", psqlInfo)
+	if err != nil {
+		log.Println(err)
+	}
 	db, err := pgxpool.New(context.Background(), viper.GetString("DATABASE_URL"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
 		os.Exit(1)
 	}
 
+
 	// defer db.Close()
 
-	err = db.Ping(context.Background())
 	CheckError(err)
 	fmt.Println("Connected!")
-	initApp.InitServer(db, context.Background(),sess)
+	initApp.InitServer(db,db2, context.Background(),sess)
 
 }
 

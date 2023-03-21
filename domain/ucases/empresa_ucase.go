@@ -63,13 +63,10 @@ func (uc *empresaUseCase) StoreEmpresa(ctx context.Context, empresa *empresa.Emp
 	return
 }
 
-func (uc *empresaUseCase) StoreArea(ctx context.Context, area *empresa.Area,rol *int) (id int,err error) {
+func (uc *empresaUseCase) StoreArea(ctx context.Context, area *empresa.Area) (err error) {
 	ctx,cancel := context.WithTimeout(ctx,uc.contextTimeout)
 	defer cancel()
-	id,err = uc.empresaRepo.StoreArea(ctx,area,rol)
-	if err != nil {
-		return id,err
-	}
+	err = uc.empresaRepo.StoreArea(ctx,area)
 	return 
 }
 
@@ -83,10 +80,10 @@ func (uc *empresaUseCase) GetEmpresa(ctx context.Context, userId string, rol int
 	return
 }
 
-func (uc *empresaUseCase) GetEmpresas(ctx context.Context) (res []empresa.Empresa, err error) {
+func (uc *empresaUseCase) GetEmpresas(ctx context.Context,emId *int) (res []empresa.Empresa, err error) {
 	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
 	defer cancel()
-	res, err = uc.empresaRepo.GetEmpresas(ctx)
+	res, err = uc.empresaRepo.GetEmpresas(ctx,emId)
 	if err != nil {
 		return res, err
 	}

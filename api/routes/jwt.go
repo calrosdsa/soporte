@@ -27,12 +27,12 @@ type ClaimsInvitation struct {
 
 var sampleSecretKey = []byte(viper.GetString("JWT_SECRET"))
 
-func GenerateInvitationJWT(id *string, rol *int, empresaId *int, email *string) (string, error) {
+func GenerateInvitationJWT(id string, rol int, empresaId int, email string) (string, error) {
 	claims := &ClaimsInvitation{
-		Id:        *id,
-		Rol:       *rol,
-		EmpresaId: *empresaId,
-		Email:     *email,
+		Id:        id,
+		Rol:       rol,
+		EmpresaId: empresaId,
+		Email:     email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},

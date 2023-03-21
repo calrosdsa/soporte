@@ -23,7 +23,7 @@ type Cliente struct {
 	Rol          int        `json:"rol"`
 }
 
-type 	UserAuth struct {
+type UserAuth struct {
 	Id        string `json:"id,omitempty"`
 	Email     string `json:"email,omitempty"`
 	Estado    int    `json:"estado"`
@@ -54,12 +54,13 @@ type ClienteResponse struct {
 type UserShortInfo struct {
 	Id        string     `json:"id"`
 	Nombre    string     `json:"nombre"`
+	Apellido  *string     `json:"apellido"`
 	Pendiente bool       `json:"pendiente"`
 	IsAdmin   bool       `json:"is_admin"`
 	Email     *string    `json:"email"`
 	Photo     *string    `json:"photo"`
 	Estado    int        `json:"estado"`
-	DateTime  *time.Time `json:"datetime"`
+	DateTime  *time.Time `json:"created_on"`
 }
 
 type UserArea struct {

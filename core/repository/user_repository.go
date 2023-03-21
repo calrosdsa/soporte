@@ -31,7 +31,7 @@ func NewPgUserRepository(conn *pgxpool.Pool, ctx context.Context) user.UserRepos
 
 func (p *pgUserRepository) SearchUser(ctx context.Context, id string, q string) (res []user.UserShortInfo, err error) {
 	log.Println(q)
-	query := `select client_id,nombre,is_admin,(false),email,profile_photo,estado,created_on
+	query := `select client_id,nombre,apellido,is_admin,(false),email,profile_photo,estado,created_on
 	from clientes where superior_id = $1 and nombre ILIKE $2;`
 	res, err = p.fetchUserShortInfo(ctx, query, id, q)
 	return
@@ -61,15 +61,15 @@ func (p *pgUserRepository) ValidateEmail(ctx context.Context, m string) (err err
 	return nil
 }
 
-func (p *pgUserRepository) CreateUserInvitation(ctx context.Context, us *user.UserShortInfo,rol *int) (res user.UserShortInfo, err error) {
+func (p *pgUserRepository) CreateUserInvitation(ctx context.Context, us *user.UserShortInfo,rol int) (res user.UserShortInfo, err error) {
 	var superiorId string
-	if *rol == int(model.RoleClienteAdmin){
+	if rol == int(model.RoleClienteAdmin){
 		query := `select superior_id from clientes where client_id = $1`
 		err = p.Conn.QueryRow(ctx, query, us.Id).Scan(&superiorId)
 		if err != nil {
 			return user.UserShortInfo{}, err
 		}
-	}else if *rol == int(model.RoleFuncionarioAdmin){
+	}else if rol == int(model.RoleFuncionarioAdmin){
 		query := `select superior_id from funcionarios where funcionario_id = $1`
 		err = p.Conn.QueryRow(ctx, query, us.Id).Scan(&superiorId)
 		if err != nil {
@@ -89,28 +89,35 @@ func (p *pgUserRepository) CreateUserInvitation(ctx context.Context, us *user.Us
 	return t, nil
 }
 
-func (p *pgUserRepository) GetUsersShortIInfo(ctx context.Context, id *string,rol *int) (res []user.UserShortInfo, err error) {
-	if *rol == int(model.RoleClienteAdmin) {
-		query := `select client_id,CONCAT  (nombre, ' ', apellido) AS "Full name",is_admin,(false),email,profile_photo,estado,created_on
+func (p *pgUserRepository) GetClientesEmpresa(ctx context.Context,emId int)(res []user.UserShortInfo,err error){
+	query := `select client_id,nombre, apellido,is_admin,(false),email,profile_photo,estado,created_on
+	from clientes where empresa_id = $1`
+	res, err = p.fetchUserShortInfo(ctx, query, emId)
+	return
+}
+
+func (p *pgUserRepository) GetUsersShortIInfoC(ctx context.Context, id string) (res []user.UserShortInfo, err error) {
+		query := `select client_id,nombre, apellido,is_admin,(false),email,profile_photo,estado,created_on
 		 from clientes where superior_id = $1;`
 		res, err = p.fetchUserShortInfo(ctx, query, id)
 		if err != nil {
 			return
 		}
-	}else if *rol == int(model.RoleFuncionarioAdmin){
-		query := `select funcionario_id,CONCAT  (nombre, ' ', apellido) AS "Full name",(false),(false),email,profile_photo,estado,created_on
-		 from funcionarios where superior_id = $1;`
-		res, err = p.fetchUserShortInfo(ctx, query, id)
-		if err != nil {
-			return 
-		}
-	}
-	
 	return
 }
 
-func (p *pgUserRepository) GetInvitaciones(ctx context.Context, id *string) (res []user.UserShortInfo, err error) {
-	query := `select id,email,is_admin,pendiente,(''),(''),(0),send_on from invitaciones where creador_id = $1`
+func (p *pgUserRepository) GetUsersShortIInfoF(ctx context.Context,emId int)(res []user.UserShortInfo,err error){
+	query := `select funcionario_id,nombre, apellido,(false),(false),email,profile_photo,estado,created_on
+		 from funcionarios where empresa_id = $1`
+	res, err = p.fetchUserShortInfo(ctx, query, emId)
+	if err != nil {
+		return 
+	}
+	return
+}
+
+func (p *pgUserRepository) GetInvitaciones(ctx context.Context, id string) (res []user.UserShortInfo, err error) {
+	query := `select id,email,(''),is_admin,pendiente,(''),(''),(0),send_on from invitaciones where creador_id = $1`
 	res, err = p.fetchUserShortInfo(ctx, query, id)
 	if err != nil {
 		return nil, err
@@ -138,16 +145,16 @@ func filter[T any](ss []T, test func(T) bool) (ret []T) {
     return
 }
 
-func (p *pgUserRepository) GetUserAddList(ctx context.Context, f *int,rol *int,sId *string) (res []user.UserArea, err error) {
+func (p *pgUserRepository) GetUserAddList(ctx context.Context, f int,rol int,sId string) (res []user.UserArea, err error) {
 	// log.Println(f)
 	var query string
 	query = `select user_id,nombre_user,estado from user_area where area_id = $1;`
 	res2, _ := p.fetchUserArea(ctx, query, f)
 	log.Println("len res2", len(res2))
-	if *rol == int(model.RoleClienteAdmin){
+	if rol == int(model.RoleClienteAdmin){
 		query = `select client_id,nombre,estado from clientes where superior_id = $1 ;`
 		res, _ = p.fetchUserArea(ctx, query,sId)
-	} else if *rol == int(model.RoleFuncionarioAdmin){
+	} else if rol == int(model.RoleFuncionarioAdmin){
 		query = `select funcionario_id,nombre,estado from funcionarios where superior_id = $1 ;`
 		res, _ = p.fetchUserArea(ctx, query,sId)
 	}
@@ -224,8 +231,8 @@ func (p *pgUserRepository) GetFuncionarios(ctx context.Context) (funcionarios []
 	return list, err
 }
 
-func (p *pgUserRepository) GetUserById(ctx context.Context, id *string,rol *int) (res user.Cliente, err error) {
-	if *rol == int(model.RoleClienteAdmin){
+func (p *pgUserRepository) GetUserById(ctx context.Context, id string,rol int) (res user.Cliente, err error) {
+	if rol == int(model.RoleClienteAdmin){
 
 		query := `select * from clientes where client_id = $1;`
 		log.Println(id)
@@ -238,7 +245,7 @@ func (p *pgUserRepository) GetUserById(ctx context.Context, id *string,rol *int)
 		} else {
 			return res, model.ErrNotFound
 		}
-	}else if *rol == int(model.RoleFuncionarioAdmin){
+	}else if rol == int(model.RoleFuncionarioAdmin){
 		query := `select * from funcionarios where funcionario_id = $1;`
 		// log.Println(id)
 		list, err := p.fetchClientes(ctx, query, id)
@@ -360,6 +367,7 @@ func (p *pgUserRepository) fetchUserShortInfo(ctx context.Context, query string,
 		err = rows.Scan(
 			&t.Id,
 			&t.Nombre,
+			&t.Apellido,
 			&t.IsAdmin,
 			&t.Pendiente,
 			&t.Email,

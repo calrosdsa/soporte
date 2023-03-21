@@ -29,24 +29,18 @@ func NewPgAccountRepository(conn *pgxpool.Pool, ctx context.Context) account.Acc
 	}
 }
 
-func IsClienteRol(rol *int) bool{
-	//retorna true si el rol es cliente = 0 o cliente admin = 2
-	return *rol == int(model.RoleCliente) || *rol == int(model.RoleClienteAdmin)
-}
-
-
-func (p *pgAccountRepository) DeleteUser(ctx context.Context,id string)(err error){
+func (p *pgAccountRepository) DeleteUser(ctx context.Context, id string) (err error) {
 	// query := `update users set estado = $1 where user_id = $2;`
 	// query2 := `update clientes set estado = $1 where user_id = $2;`
 	// _,err = p.Conn.Exec(ctx,query,Eliminado,id)
 	// _,err = p.Conn.Exec(ctx,query2,Eliminado,id)
 	query := `delete from users where user_id = $1;`
 	query2 := `delete from clientes where user_id = $1;`
-	_,err = p.Conn.Exec(ctx,query,id)
+	_, err = p.Conn.Exec(ctx, query, id)
 	if err != nil {
 		return
 	}
-	_,err = p.Conn.Exec(ctx,query2,id)
+	_, err = p.Conn.Exec(ctx, query2, id)
 	if err != nil {
 		return
 	}
@@ -56,20 +50,20 @@ func (p *pgAccountRepository) DeleteUser(ctx context.Context,id string)(err erro
 func (p *pgAccountRepository) Login(ctx context.Context, loginRequest *account.LoginRequest) (res user.UserAuth, err error) {
 	var userId string
 	query := `select user_id from users where email = $1 and password = crypt($2, password);`
-	err = p.Conn.QueryRow(ctx,query,loginRequest.Email,loginRequest.Password).Scan(&userId)
-	if err != nil{
-		return res,model.ErrNotFound
+	err = p.Conn.QueryRow(ctx, query, loginRequest.Email, loginRequest.Password).Scan(&userId)
+	if err != nil {
+		return res, model.ErrNotFound
 	}
 	res = user.UserAuth{}
 	query1 := `select (client_id,email,estado,rol,empresa_id,nombre) from clientes where user_id = $1 limit 1;`
-	err = p.Conn.QueryRow(ctx,query1,userId).Scan(&res)
-	if err != nil{
+	err = p.Conn.QueryRow(ctx, query1, userId).Scan(&res)
+	if err != nil {
 		log.Println("isFuncionario")
 		query1 := `select (funcionario_id,email,estado,rol,empresa_id,nombre) from funcionarios where user_id = $1 limit 1;`
-	    err = p.Conn.QueryRow(ctx,query1,userId).Scan(&res)
-	    if err != nil{
-		    return res,model.ErrNotFound
-	    }
+		err = p.Conn.QueryRow(ctx, query1, userId).Scan(&res)
+		if err != nil {
+			return res, model.ErrNotFound
+		}
 		// return res,model.ErrNotFound
 	}
 	return
@@ -84,11 +78,11 @@ func (p *pgAccountRepository) Login(ctx context.Context, loginRequest *account.L
 	// }
 }
 
-func (p *pgAccountRepository) RegisterCliente(ctx context.Context, a *account.RegisterForm) (res user.ClienteResponse, err error) {
+func (p *pgAccountRepository) RegisterCliente(ctx context.Context, a *account.RegisterForm) (res user.UserAuth, err error) {
 	conn, err := p.Conn.BeginTx(p.Context, pgx.TxOptions{})
 
 	if err != nil {
-		return user.ClienteResponse{}, err
+		return user.UserAuth{}, err
 	}
 	defer func() {
 		if err != nil {
@@ -98,10 +92,10 @@ func (p *pgAccountRepository) RegisterCliente(ctx context.Context, a *account.Re
 		}
 	}()
 	var emailInvitacion string
-	query0 :=`select email from invitaciones where email = $1;`
-	err = conn.QueryRow(ctx,query0,a.Email).Scan(&emailInvitacion)
-	if emailInvitacion != *a.Email{
-		return res,errors.New("no cuentas con una invitacion para poder registrarte")
+	query0 := `select email from invitaciones where email = $1;`
+	err = conn.QueryRow(ctx, query0, a.Email).Scan(&emailInvitacion)
+	if emailInvitacion != a.Email {
+		return res, errors.New("no cuentas con una invitacion para poder registrarte")
 	}
 
 	t := account.User{}
@@ -109,41 +103,41 @@ func (p *pgAccountRepository) RegisterCliente(ctx context.Context, a *account.Re
 	err = conn.QueryRow(p.Context, query, a.Username, a.Email).Scan(&t.Email, &t.Username)
 	log.Println(t)
 	if t.Email != nil {
-		if *t.Email == *a.Email {
-			return user.ClienteResponse{}, errors.New("ya existe un usuario con este email")
+		if *t.Email == a.Email {
+			return user.UserAuth{}, errors.New("ya existe un usuario con este email")
 		}
 	}
 	if t.Username != nil {
 		if *t.Username == *a.Username {
-			return user.ClienteResponse{}, errors.New("yste nombre ya esta ocupado")
+			return user.UserAuth{}, errors.New("yste nombre ya esta ocupado")
 		}
 	}
 	query2 := `insert into users (email,username,created_on,password) values ($1,$2,now(),crypt($3, gen_salt('bf'))) returning (user_id);`
 	var userId string
 	err = conn.QueryRow(p.Context, query2, a.Email, a.Username, a.Password).Scan(&userId)
 	if err != nil {
-		return user.ClienteResponse{}, err
+		return user.UserAuth{}, err
 	}
-	cliente := user.ClienteResponse{}
+	cliente := user.UserAuth{}
 	log.Println(reflect.TypeOf(a.EmpresaId))
 	query3 := `insert into clientes (nombre,email,empresa_id,created_on,user_id,superior_id,rol) values ($1,$2,$3,$4,$5,$6,$7)
 	returning (client_id,nombre,email,empresa_id,user_id);`
-	err = conn.QueryRow(p.Context, query3, a.Username, a.Email, a.EmpresaId, time.Now(), userId,a.SuperiorId,a.Rol).Scan(&cliente)
+	err = conn.QueryRow(p.Context, query3, a.Username, a.Email, a.EmpresaId, time.Now(), userId, a.SuperiorId, a.Rol).Scan(&cliente)
 	if err != nil {
-		return user.ClienteResponse{}, err
+		return user.UserAuth{}, err
 	}
 	query4 := `delete from invitaciones where email = $1;`
-	_,err = conn.Exec(ctx,query4,cliente.Email)
-	if err != nil{
-		return user.ClienteResponse{},err
+	_, err = conn.Exec(ctx, query4, cliente.Email)
+	if err != nil {
+		return user.UserAuth{}, err
 	}
 	return cliente, err
 }
 
-func (p *pgAccountRepository) RegisterFuncionario(ctx context.Context, a *account.RegisterForm) (res user.UserAuth,err error) {
+func (p *pgAccountRepository) RegisterFuncionario(ctx context.Context, a *account.RegisterForm) (res user.UserAuth, err error) {
 	conn, err := p.Conn.BeginTx(p.Context, pgx.TxOptions{})
 	if err != nil {
-		return 
+		return
 	}
 	defer func() {
 		if err != nil {
@@ -158,7 +152,7 @@ func (p *pgAccountRepository) RegisterFuncionario(ctx context.Context, a *accoun
 	err = conn.QueryRow(p.Context, query, a.Username, a.Email).Scan(&t.Email, &t.Username)
 	// log.Println(t)
 	if t.Email != nil {
-		if *t.Email == *a.Email {
+		if *t.Email == a.Email {
 			return user.UserAuth{}, model.ErrConflictEmail
 		}
 	}
@@ -171,33 +165,32 @@ func (p *pgAccountRepository) RegisterFuncionario(ctx context.Context, a *accoun
 	var userId string
 	err = conn.QueryRow(p.Context, query, a.Email, a.Username, time.Now(), a.Password).Scan(&userId)
 	if err != nil {
-		return 
+		return
 	}
-	var superiorId string;
+	var superiorId string
 	// log.Println(a.SuperiorId)
 	query = `select superior_id from funcionarios where funcionario_id = $1;`
-	err = conn.QueryRow(p.Context,query,a.SuperiorId).Scan(&superiorId)
+	err = conn.QueryRow(p.Context, query, a.SuperiorId).Scan(&superiorId)
 	if err != nil {
 		log.Println("error is here")
-		return 	
+		return
 	}
 	// log.Panicln("USER INSERTED")
 	res = user.UserAuth{}
 	query = `insert into funcionarios (nombre,email,empresa_id,created_on,user_id,superior_id,rol) values ($1,$2,$3,$4,$5,$6,$7)
 	returning (funcionario_id,email,estado,rol,empresa_id,(''));`
-	err = conn.QueryRow(p.Context, query, a.Username, a.Email, a.EmpresaId, time.Now(), userId,superiorId,a.Rol).Scan(&res)
+	err = conn.QueryRow(p.Context, query, a.Username, a.Email, a.EmpresaId, time.Now(), userId, superiorId, a.Rol).Scan(&res)
 	// log.Println(*t.Username)
 	if err != nil {
-		return 
+		return
 	}
 	query = `delete from invitaciones where email = $1;`
-	_,err = conn.Exec(p.Context,query,res.Email)
+	_, err = conn.Exec(p.Context, query, res.Email)
 	if err != nil {
 		return
 	}
 
-
-	return 
+	return
 }
 
 // func (p *pgAccountRepository) ValidateInvitation(ctx context.Context,mail *string,rol *int)(err error){

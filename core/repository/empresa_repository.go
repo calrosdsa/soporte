@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	// "errors"
 	// "soporte-go/core/model"
 	"time"
@@ -10,19 +11,18 @@ import (
 	"log"
 	"soporte-go/core/model/empresa"
 
-
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/sirupsen/logrus"
 	"soporte-go/core/model"
-	
+
+	// "github.com/jackc/pgx/v5/pgxpool"
+	"github.com/sirupsen/logrus"
 )
 
 type pgEmpresaRepository struct {
-	Conn    *pgxpool.Pool
+	Conn    *sql.DB
 	Context context.Context
 }
 
-func NewPgEmpresaRepository(conn *pgxpool.Pool, ctx context.Context) empresa.EmpresaRepository {
+func NewPgEmpresaRepository(conn *sql.DB, ctx context.Context) empresa.EmpresaRepository {
 	return &pgEmpresaRepository{
 		Conn:    conn,
 		Context: ctx,
@@ -31,7 +31,7 @@ func NewPgEmpresaRepository(conn *pgxpool.Pool, ctx context.Context) empresa.Emp
 
 func (p *pgEmpresaRepository) AreaChangeState(ctx context.Context,state int,id int)(err error){
 	query := `update areas set estado = $1 where id = $2;`
-	_,err= p.Conn.Exec(ctx,query,state,id)
+	_,err= p.Conn.ExecContext(ctx,query,state,id)
 	log.Println(err)
 	return 
 }
@@ -55,7 +55,7 @@ func (p *pgEmpresaRepository) GetAreaByName(ctx context.Context,n string)(res em
 func(p *pgEmpresaRepository)AddUserToArea(ctx context.Context,id *string,n *string,a *empresa.AddUserRequestData) (err error){
 	// query := `UPDATE clientes SET areas = areas || '{ $1 }' WHERE client_id = $2;`
 	query:= `insert into user_area (user_id,area_id,nombre_user,nombre_area) values($1,$2,$3,$4);`
-	_,err = p.Conn.Exec(ctx,query,id,a.AreaId,n,a.AreaName)
+	_,err = p.Conn.ExecContext(ctx,query,id,a.AreaId,n,a.AreaName)
 	return 
 }
 
@@ -63,7 +63,7 @@ func (p *pgEmpresaRepository) GetAreasUser(ctx context.Context,userId string) (r
 	// var superiorId string
 	// // log.Println(userId)
 	// query := `select superior_id from clientes where client_id = $1;`
-	// err = p.Conn.QueryRow(ctx,query,userId).Scan(&superiorId)
+	// err = p.Conn.QueryRowContext(ctx,query,userId).Scan(&superiorId)
 	// log.Println(superiorId)
 	query1 := `select area_id,nombre_area,estado from user_area where user_id = $1;`
 	res,err = p.fetchAreasUser(ctx,query1,userId)
@@ -80,7 +80,7 @@ func (p *pgEmpresaRepository) GetAreasUserAdmin(ctx context.Context,userId *stri
 	// log.Println(userId)
 	if *rol == int(model.RoleCliente) || *rol == int(model.RoleClienteAdmin) {
 		query := `select superior_id from clientes where client_id = $1;`
-		err = p.Conn.QueryRow(ctx,query,userId).Scan(&superiorId)
+		err = p.Conn.QueryRowContext(ctx,query,userId).Scan(&superiorId)
 		if err != nil {
 			return nil,err
 	}
@@ -93,7 +93,7 @@ func (p *pgEmpresaRepository) GetAreasUserAdmin(ctx context.Context,userId *stri
 	}
    }else if *rol == int(model.RoleFuncionarioAdmin) || *rol == int(model.RoleFuncionario){
 	query := `select superior_id from funcionarios where funcionario_id = $1;`
-	err = p.Conn.QueryRow(ctx,query,userId).Scan(&superiorId)
+	err = p.Conn.QueryRowContext(ctx,query,userId).Scan(&superiorId)
 	if err != nil {
 		return nil,err
 	}
@@ -109,8 +109,8 @@ func (p *pgEmpresaRepository) GetAreasUserAdmin(ctx context.Context,userId *stri
 }
 
 func (p *pgEmpresaRepository) StoreEmpresa(ctx context.Context, empresa *empresa.Empresa) (err error) {
-	query := `insert into empresas (nombre,slug,telefono,created_on) values($1,$2,$3,$4);`
-	_,err = p.Conn.Exec(ctx,query,empresa.Nombre,empresa.Slug,empresa.Telefono,time.Now())
+	query := `insert into empresas (nombre,slug,telefono,created_on,parent_id) values($1,$2,$3,$4,$5);`
+	_,err = p.Conn.ExecContext(ctx,query,empresa.Nombre,empresa.Slug,empresa.Telefono,time.Now(),empresa.ParentId)
 	return err
 }
 
@@ -123,7 +123,7 @@ func (p *pgEmpresaRepository) GetAreasEmpresa(ctx context.Context,id int)(res []
 	return list,err
 }
 
-func (p *pgEmpresaRepository) StoreArea(ctx context.Context, area *empresa.Area,rol *int) (id int,err error) {
+func (p *pgEmpresaRepository) StoreArea(ctx context.Context, area *empresa.Area) (err error) {
 	//Listar todas las áreas que pertenecen a una entidad en particular utilizando su identificador único (ID).
 	list,err := p.GetAreasEmpresa(ctx,area.EmpresaId)
 	if err != nil {
@@ -134,36 +134,22 @@ func (p *pgEmpresaRepository) StoreArea(ctx context.Context, area *empresa.Area,
 	// crear no entre en conflicto con el nombre de otra área existente en la misma empresa o entidad.
 	for _,item := range list{
 		if item.Nombre == area.Nombre{
-			return 0,model.ErrConflict
+			return model.ErrConflict
 		}
 	}
-	var superiorId string
-	//Obtener el valor del campo "superior_id" basándose en el ID del cliente o del funcionario, con el propósito
-	// de utilizar este valor para crear el área correspondiente posteriormente.
-	if *rol == int(model.RoleClienteAdmin) {
-		log.Println(area.CreadorId)
-		queryClient := `select superior_id from clientes where client_id = $1;`
-		err= p.Conn.QueryRow(ctx,queryClient,area.CreadorId).Scan(&superiorId)
-		if err != nil {
-			return 
-		}
-		log.Println(superiorId)
-	}else if *rol == int(model.RoleFuncionarioAdmin) {
-		queryClient := `select superior_id from funcionarios where funcionario_id = $1;`
-		err= p.Conn.QueryRow(ctx,queryClient,area.CreadorId).Scan(&superiorId)
-		if err != nil {
-			return 
-		}
-	}
+	
 	var areaId int
 	query1 := `insert into areas (nombre,empresa_id,created_on,creador_id)
-	values ($1,$2,$3,$4) returning (id);`
-	err = p.Conn.QueryRow(ctx,query1,area.Nombre,area.EmpresaId	,time.Now(),superiorId).Scan(&areaId)
+	values ($1,$2,$3,$4) returning (id)`
+	err = p.Conn.QueryRowContext(ctx,query1,area.Nombre,area.EmpresaId,time.Now(),area.CreadorId).Scan(&areaId)
+	// log.Println(res.LastInsertId())
+	// area.Id,_ = res.LastInsertId()
 	if err != nil {
-		return 0,err
+		return
 	}
-
-	return areaId,err
+	log.Println(areaId)
+	area.Id = areaId
+	return 
 }
 
 func (p *pgEmpresaRepository) GetEmpresa(ctx context.Context,userId string,rol int) (res empresa.Empresa, err error) {
@@ -171,10 +157,10 @@ func (p *pgEmpresaRepository) GetEmpresa(ctx context.Context,userId string,rol i
 	log.Println(userId)
 	if rol == int(model.RoleFuncionario) || rol == int(model.RoleFuncionarioAdmin){
 		query := `select empresa_id from funcionarios where user_id = $1;`
-		err = p.Conn.QueryRow(ctx, query, userId).Scan(&empresaId)
+		err = p.Conn.QueryRowContext(ctx, query, userId).Scan(&empresaId)
 	}else{
 		query := `select empresa_id from clientes where user_id = $1;`
-		err = p.Conn.QueryRow(ctx, query, userId).Scan(&empresaId)
+		err = p.Conn.QueryRowContext(ctx, query, userId).Scan(&empresaId)
 	}
 	if err != nil {
 		log.Println(err)
@@ -194,11 +180,11 @@ func (p *pgEmpresaRepository) GetEmpresa(ctx context.Context,userId string,rol i
 	
 }
 
-func (p *pgEmpresaRepository) GetEmpresas(ctx context.Context) (res []empresa.Empresa, err error) {
-	query := `select * from empresas;`
-	res,err = p.fetchEmpresa(ctx,query)
+func (p *pgEmpresaRepository) GetEmpresas(ctx context.Context,emId *int) (res []empresa.Empresa, err error) {
+	query := `select * from empresas where parent_id = $1`
+	res,err = p.fetchEmpresa(ctx,query,emId)
 	if err != nil {
-		log.Println(err)
+		// log.Println(err)
 		return nil,err
 	}
 	return 
@@ -206,7 +192,7 @@ func (p *pgEmpresaRepository) GetEmpresas(ctx context.Context) (res []empresa.Em
 
 
 func (p *pgEmpresaRepository) fetchEmpresa(ctx context.Context, query string, args ...interface{}) (result []empresa.Empresa, err error) {
-	rows,err:= p.Conn.Query(p.Context, query, args...)
+	rows,err:= p.Conn.QueryContext(p.Context, query, args...)
 	defer func ()  {
 		rows.Close()
 	   }()
@@ -221,13 +207,14 @@ func (p *pgEmpresaRepository) fetchEmpresa(ctx context.Context, query string, ar
 			&t.Estado,
 			&t.CreatedOn,
 			&t.UpdatedOn,
+			&t.ParentId,
 		)		
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
 	}
 	result = append(result, t)
-	log.Println(result)
+	// log.Println(result)
 }
 
 	return result, nil
@@ -236,7 +223,7 @@ func (p *pgEmpresaRepository) fetchEmpresa(ctx context.Context, query string, ar
 
 
 func (p *pgEmpresaRepository) fetchAreas(ctx context.Context, query string, args ...interface{}) (result []empresa.Area, err error) {
-	rows,err:= p.Conn.Query(p.Context, query, args...)
+	rows,err:= p.Conn.QueryContext(p.Context, query, args...)
 	defer func ()  {
 	 rows.Close()
 	}()
@@ -264,7 +251,7 @@ func (p *pgEmpresaRepository) fetchAreas(ctx context.Context, query string, args
 
 
 func (p *pgEmpresaRepository) fetchAreasUser(ctx context.Context, query string, args ...interface{}) (result []empresa.AreaUser, err error) {
-	rows,err:= p.Conn.Query(p.Context, query, args...)
+	rows,err:= p.Conn.QueryContext(p.Context, query, args...)
 	defer func ()  {
 	 rows.Close()
 	}()

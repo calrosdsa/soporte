@@ -44,6 +44,22 @@ func NewUserHandler(e *echo.Echo, us user.UserUseCases) {
 	e.GET("user/cancel-invitation/", handler.CancelInvitation)
 	e.GET("user/search/", handler.SearchUser)
 	e.GET("user/add-user-list/:areaId/", handler.GetUserFiltered)
+	e.GET("user/users-empresa/:emId/",handler.GetUsersbyEmpresaId)
+}
+
+func (u *UserHandler)GetUsersbyEmpresaId(c echo.Context)(err error){
+	token := c.Request().Header["Authorization"][0]
+	_, err = r.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
+	ctx := c.Request().Context()
+	emId,_:= strconv.Atoi(c.Param("emId"))
+	res,err := u.UserUcase.GetUsersbyEmpresaId(ctx,emId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError,model.ResponseError{Message: err.Error()})
+	}
+	return c.JSON(http.StatusOK,res)
 }
 
 func (a *UserHandler) GetUserFiltered(c echo.Context) (err error) {
@@ -55,7 +71,7 @@ func (a *UserHandler) GetUserFiltered(c echo.Context) (err error) {
 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	ctx := c.Request().Context()
-	res, err := a.UserUcase.GetUserAddList(ctx,&id, &claims.Rol,&claims.UserId)
+	res, err := a.UserUcase.GetUserAddList(ctx,id, claims.Rol,claims.UserId)
 	if err != nil {
 		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
 	}
@@ -118,7 +134,7 @@ func (a *UserHandler) ResendEmail(c echo.Context) (err error) {
 	} else {
 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: errors.New("no rol presente en jwt token").Error()})
 	}
-	tokenInvitation, err := r.GenerateInvitationJWT(&claims.UserId, &rol, &claims.Empresa, &m)
+	tokenInvitation, err := r.GenerateInvitationJWT(claims.UserId, rol, claims.Empresa, m)
 	if err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, err.Error())
 	}
@@ -145,7 +161,7 @@ func (a *UserHandler) GetUserList(c echo.Context) (err error) {
 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	ctx := c.Request().Context()
-	res, err := a.UserUcase.GetUsersShortIInfo(ctx, &claims.UserId, &claims.Rol)
+	res, err := a.UserUcase.GetUsersShortIInfo(ctx, claims.UserId, claims.Rol,claims.Empresa)
 	if err != nil {
 		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
 	}
@@ -164,9 +180,16 @@ func (a *UserHandler) UserRegisterInvitation(c echo.Context) (err error) {
 		return c.JSON(http.StatusUnprocessableEntity, err.Error())
 	}
 	var rol int
-	// log.Println("rol",claims.Rol)
-	if claims.Rol == int(model.RoleClienteAdmin) {
+	if to.EmpresaId != 0 {
 		if to.IsAdmin {
+			rol = 2
+		} else {
+			rol = 0
+		}
+		claims.Empresa = to.EmpresaId
+	}else {
+		if claims.Rol == int(model.RoleClienteAdmin) {
+			if to.IsAdmin {
 			rol = 2
 		} else {
 			rol = 0
@@ -181,11 +204,10 @@ func (a *UserHandler) UserRegisterInvitation(c echo.Context) (err error) {
 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: errors.New("no rol presente en jwt token").Error()})
 	}
 	// log.Println(rol)
-	if err != nil {
-		return c.JSON(http.StatusUnprocessableEntity, err.Error())
-	}
+    }
+	
 	ctx := c.Request().Context()
-	res, err := a.UserUcase.UserRegisterInvitation(ctx, &to, &claims.UserId, &rol, &claims.Empresa)
+	res, err := a.UserUcase.UserRegisterInvitation(ctx, &to, claims.UserId, rol, claims.Empresa)
 	// log.Println(url)
 	if err != nil {
 		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
@@ -254,7 +276,7 @@ func (u *UserHandler) GetClientes(c echo.Context) (err error) {
 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	ctx := c.Request().Context()
-	res, err := u.UserUcase.GetClientes(ctx, &claims.UserId, &claims.Rol)
+	res, err := u.UserUcase.GetClientes(ctx, claims.UserId, claims.Rol)
 	if err != nil {
 		logrus.Error(err)
 	}
@@ -270,7 +292,7 @@ func (u *UserHandler) GetClienteById(c echo.Context) (err error) {
 
 	id := c.Param("clienteId")
 	ctx := c.Request().Context()
-	res, err := u.UserUcase.GetUserById(ctx, &id, &claims.Rol)
+	res, err := u.UserUcase.GetUserById(ctx, id, claims.Rol)
 	if err != nil {
 		logrus.Error(err)
 	}

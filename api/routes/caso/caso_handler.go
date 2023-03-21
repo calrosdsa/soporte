@@ -3,7 +3,7 @@ package caso
 import (
 	"log"
 	"net/http"
-	"reflect"
+	// "reflect"
 	"soporte-go/core/model/caso"
 	model "soporte-go/core/model"
 	"strconv"
@@ -59,10 +59,10 @@ func (u *CasoHandler) GetAllCasosUser(c echo.Context) (err error) {
 		Estado:    estado,
 		Prioridad: prioridad,
 	}
-	priori, err := strconv.Atoi(prioridad)
-	log.Println(err)
-	log.Println(reflect.TypeOf(priori))
-	log.Println(casoQuery)
+	// priori, err := strconv.Atoi(prioridad)
+	// log.Println(err)
+	// log.Println(reflect.TypeOf(priori))
+	// log.Println(casoQuery)
 	token := c.Request().Header["Authorization"][0]
 	claims, err := _routes.ExtractClaims(token)
 	if err != nil {
@@ -87,11 +87,14 @@ func (u *CasoHandler) GetCasosUser(c echo.Context) (err error) {
 	estado := c.QueryParam("estado")
 	prioridad := c.QueryParam("prioridad")
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	log.Println("pagevalue", page)
+	page_size,_ := strconv.Atoi(c.QueryParam("page_size"))
+
+	// log.Println("pagevalue", page)
 	casoQuery := caso.CasoQuery{
 		Page:      page,
 		Estado:    estado,
 		Prioridad: prioridad,
+		PageSize:  page_size,
 	}
 	// priori, err := strconv.Atoi(prioridad)
 	// log.Println(err)
@@ -103,7 +106,7 @@ func (u *CasoHandler) GetCasosUser(c echo.Context) (err error) {
 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	ctx := c.Request().Context()
-	res, size, err := u.CasoUseCase.GetCasosUser(ctx, &claims.UserId, &casoQuery,&claims.Rol)
+	res, size, err := u.CasoUseCase.GetCasosUser(ctx, claims.UserId, &casoQuery,claims.Rol)
 	if err != nil {
 		logrus.Error(err)
 		return c.JSON(http.StatusNotFound, model.ResponseError{Message: err.Error()})

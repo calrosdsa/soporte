@@ -17,20 +17,30 @@ import (
 
 	// "log"
 	"html/template"
+	"soporte-go/core/model"
 )
 
 type userUseCase struct {
 	userRepo       user.UserRepository
 	contextTimeout time.Duration
-	gomailAuth       *gomail.Dialer
+	gomailAuth     *gomail.Dialer
+	util           model.Util
 }
 
-func NewUserUseCases(u user.UserRepository, timeout time.Duration, g *gomail.Dialer) user.UserUseCases {
+func NewUserUseCases(u user.UserRepository, timeout time.Duration, g *gomail.Dialer, util model.Util) user.UserUseCases {
 	return &userUseCase{
 		userRepo:       u,
 		contextTimeout: timeout,
-		gomailAuth:       g,
+		gomailAuth:     g,
+		util:           util,
 	}
+}
+
+func (a *userUseCase) GetUsersbyEmpresaId(ctx context.Context,emId int) (res []user.UserShortInfo,err error) {
+	ctx, cancel := context.WithTimeout(ctx,a.contextTimeout)
+	defer cancel()
+	res,err = a.userRepo.GetClientesEmpresa(ctx,emId)
+	return
 }
 
 func (a *userUseCase) DeleteInvitation(ctx context.Context, m string) (err error) {
@@ -60,22 +70,22 @@ func (a *userUseCase) sendEmail(emails []string, url string) {
 		})
 		m := gomail.NewMessage()
 		m.SetHeader("From", "jmiranda@teclu.com")
-		m.SetHeader("To",emails...)
+		m.SetHeader("To", emails...)
 		// m.SetAddressHeader("Cc", "dan@example.com", "Dan")
 		m.SetHeader("Subject", "Hello!")
 		m.SetBody("text/html", body.String())
 		// m.Attach("/home/Alex/lolcat.jpg")
 
 		// d := gomail.NewDialer("mail.teclu.com", 25, "jmiranda@teclu.com", "jmiranda2022")
-		if err := a.gomailAuth.DialAndSend(m);err != nil {
+		if err := a.gomailAuth.DialAndSend(m); err != nil {
 			log.Println(err)
 		}
-		
+
 		// // headers := "MIME-version: 1.0;\nContent-Type: text/html;"
 		// mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 		// body.Write([]byte(fmt.Sprintf("Subject: yourSubject\n%s\n\n", mimeHeaders)))
 		// // msg :=[]byte("Hello! I'm trying out smtp to send emails to recipients.")
-		
+
 		// err := smtp.SendMail("mail.teclu.com:25", a.smtpAuth, "jmiranda@teclu.com", mails, body.Bytes())
 		// if err != nil{
 		// 	log.Println(err)
@@ -87,19 +97,19 @@ func (a *userUseCase) ReSendEmail(m []string, url string) {
 	a.sendEmail(m, url)
 }
 
-func (a *userUseCase) UserRegisterInvitation(ctx context.Context, to *user.UserRegistrationRequest, id *string,rol *int,empresaId *int) (res []user.UserShortInfo, err error) {
+func (a *userUseCase) UserRegisterInvitation(ctx context.Context, to *user.UserRegistrationRequest, id string, rol int, empresaId int) (res []user.UserShortInfo, err error) {
 	ctx, cancel := context.WithTimeout(ctx, a.contextTimeout)
 	defer cancel()
 	invitations := make([]user.UserShortInfo, len(to.To))
 	for index, value := range to.To {
-		tokenInvitation, _ := jwt.GenerateInvitationJWT(id, rol, empresaId,&value)
-     	url := fmt.Sprintf("http://localhost:3000/auth/registro?auth=%s", tokenInvitation)
+		tokenInvitation, _ := jwt.GenerateInvitationJWT(id, rol, empresaId, value)
+		url := fmt.Sprintf("http://localhost:3000/auth/registro?auth=%s", tokenInvitation)
 		t := user.UserShortInfo{
 			Nombre:  value,
-			Id:      *id,
+			Id:      id,
 			IsAdmin: to.IsAdmin,
 		}
-		val, _ := a.userRepo.CreateUserInvitation(ctx, &t,rol)
+		val, _ := a.userRepo.CreateUserInvitation(ctx, &t, rol)
 		// if err != nil{
 		// 	return nil,err
 		// }
@@ -122,17 +132,28 @@ func (a *userUseCase) UserRegisterInvitation(ctx context.Context, to *user.UserR
 	return invitations, nil
 }
 
-func(u *userUseCase) SearchUser(ctx context.Context,id string,q string)(res []user.UserShortInfo,err error){
-	ctx,cancel :=  context.WithTimeout(ctx,u.contextTimeout)
+func (u *userUseCase) SearchUser(ctx context.Context, id string, q string) (res []user.UserShortInfo, err error) {
+	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
-	res,err = u.userRepo.SearchUser(ctx,id,q)
+	res, err = u.userRepo.SearchUser(ctx, id, q)
 	return
 }
 
-func (u *userUseCase) GetUsersShortIInfo(ctx context.Context, id *string,rol *int) (res []user.UserShortInfo, err error) {
+func (u *userUseCase) GetUsersShortIInfo(ctx context.Context, id string, rol int, emId int) (res []user.UserShortInfo, err error) {
 	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
-	list, err := u.userRepo.GetUsersShortIInfo(ctx, id,rol)
+	var list []user.UserShortInfo
+	if u.util.IsFuncionarioAdmin(rol) {
+		list, err = u.userRepo.GetUsersShortIInfoF(ctx,emId)
+		if err != nil {
+			return
+		}
+	} else if u.util.IsClienteAdmin(rol){
+		list, err = u.userRepo.GetUsersShortIInfoC(ctx, id)
+		if err != nil {
+			return
+		}
+	}
 	list2, err := u.userRepo.GetInvitaciones(ctx, id)
 	res = append(list, list2...)
 	return
@@ -143,10 +164,10 @@ func (u *userUseCase) GetClientesByArea(ctx context.Context, id int) (res []user
 	return
 }
 
-func (u *userUseCase) GetUserAddList(ctx context.Context,f *int,rol *int,sId *string)(res []user.UserArea,err error) {
-	ctx,cancel := context.WithTimeout(ctx,u.contextTimeout)
+func (u *userUseCase) GetUserAddList(ctx context.Context, f int, rol int, sId string) (res []user.UserArea, err error) {
+	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
-	res,err = u.userRepo.GetUserAddList(ctx,f,rol,sId)
+	res, err = u.userRepo.GetUserAddList(ctx, f, rol, sId)
 	return
 }
 
@@ -161,10 +182,10 @@ func (u *userUseCase) GetFuncionarios(ctx context.Context) ([]user.Funcionario, 
 	return list, err
 }
 
-func (u *userUseCase) GetClientes(ctx context.Context, id *string,rol *int) ([]user.UserShortInfo, error) {
+func (u *userUseCase) GetClientes(ctx context.Context, id string, rol int) ([]user.UserShortInfo, error) {
 	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
-	list, err := u.userRepo.GetUsersShortIInfo(ctx, id,rol)
+	list, err := u.userRepo.GetUsersShortIInfoC(ctx, id)
 	if err != nil {
 		log.Println(err)
 	}
@@ -197,10 +218,10 @@ func (u *userUseCase) UpdateFuncionario(ctx context.Context, columns []string, v
 	return nil
 }
 
-func (u *userUseCase) GetUserById(ctx context.Context, id *string,rol *int) (res user.Cliente, err error) {
+func (u *userUseCase) GetUserById(ctx context.Context, id string, rol int) (res user.Cliente, err error) {
 	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
-	res, err = u.userRepo.GetUserById(ctx, id,rol)
+	res, err = u.userRepo.GetUserById(ctx, id, rol)
 	if err != nil {
 		return
 	}

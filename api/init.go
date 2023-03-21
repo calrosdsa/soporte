@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"time"
 
@@ -16,13 +17,18 @@ import (
 	// "github.com/spf13/viper"
 
 	// "github.com/spf13/viper"
-	_r_ws "soporte-go/api/routes"
-	_r_account "soporte-go/api/routes/account"
-	_r_caso "soporte-go/api/routes/caso"
-	_r_empresa "soporte-go/api/routes/empresa"
-	_r_media "soporte-go/api/routes/media"
-	_r_user "soporte-go/api/routes/user"
+	_ws "soporte-go/api/routes"
+	_account "soporte-go/api/routes/account"
+	_caso "soporte-go/api/routes/caso"
+	_empresa "soporte-go/api/routes/empresa"
+	_media "soporte-go/api/routes/media"
+	_user "soporte-go/api/routes/user"
 
+	domain_r "soporte-go/domain/repository"
+
+	_r_caso "soporte-go/core/repository/caso"
+
+	// "soporte-go/core/model"
 	_repository "soporte-go/core/repository"
 	_uCase "soporte-go/domain/ucases"
 
@@ -33,7 +39,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func InitServer(db *pgxpool.Pool, ctx context.Context, sess *session.Session) {
+func InitServer(db *pgxpool.Pool, db2 *sql.DB, ctx context.Context, sess *session.Session) {
 	e := echo.New()
 	log.Println("init server....`")
 	// middl := InitMiddleware()
@@ -50,33 +56,36 @@ func InitServer(db *pgxpool.Pool, ctx context.Context, sess *session.Session) {
 	mHost := "mail.teclu.com"
 	gomailAuth := gomail.NewDialer(mHost, 25, mUser, mPass)
 
+	util := domain_r.NewUtil()
+
 	timeoutContext := time.Duration(15) * time.Second
 	accountRepository := _repository.NewPgAccountRepository(db, ctx)
-	accountUseCase := _uCase.NewAccountUseCase(accountRepository, timeoutContext)
-	_r_account.NewAccountHandler(e, accountUseCase)
+	accountUseCase := _uCase.NewAccountUseCase(accountRepository, timeoutContext,util)
+	_account.NewAccountHandler(e, accountUseCase)
 
 	//user
 	userRepository := _repository.NewPgUserRepository(db, ctx)
-	userUseCase := _uCase.NewUserUseCases(userRepository, timeoutContext, gomailAuth)
-	_r_user.NewUserHandler(e, userUseCase)
+	userUseCase := _uCase.NewUserUseCases(userRepository, timeoutContext, gomailAuth,util)
+	_user.NewUserHandler(e, userUseCase)
 
 	//caso
-	casoRepository := _repository.NewPgCasoRepository(db, ctx)
-	casoUseCase := _uCase.NewCasoUseCase(casoRepository, timeoutContext)
-	_r_caso.NewCasoHandler(e, casoUseCase)
+	casoRepository := _r_caso.NewPgCasoRepository(db2, ctx)
+
+	casoUseCase := _uCase.NewCasoUseCase(casoRepository, timeoutContext, util)
+	_caso.NewCasoHandler(e, casoUseCase)
 
 	//empresa
-	empresaRepository := _repository.NewPgEmpresaRepository(db, ctx)
+	empresaRepository := _repository.NewPgEmpresaRepository(db2, ctx)
 	empresaUseCase := _uCase.NewEmpresaUseCase(empresaRepository, timeoutContext)
-	_r_empresa.NewEmpresaHandler(e, empresaUseCase)
+	_empresa.NewEmpresaHandler(e, empresaUseCase)
 
 	//media
 	mediaRepository := _repository.NewMediaRepository(db, ctx)
 	mediaUseCase := _uCase.NewMediaUseCase(mediaRepository, timeoutContext, sess)
-	_r_media.NewMediaHandler(e, mediaUseCase)
+	_media.NewMediaHandler(e, mediaUseCase)
 
 	wsRepository := _repository.NewWsRepository(db, ctx)
-	_r_ws.NewWsHandler(e, wsRepository)
+	_ws.NewWsHandler(e, wsRepository)
 	log.Fatal(e.Start(":8000")) //nolint
 
 }

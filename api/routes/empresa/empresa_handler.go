@@ -23,16 +23,36 @@ func NewEmpresaHandler(e *echo.Echo, u empresa.EmpresaUseCase) {
 		EmpresaUseCase: u,
 	}
 
-	e.GET("/empresa/", handler.GetEmpresaUser)
-	e.GET("/empresa/areas/", handler.GetAreasUserAdmin)
-	e.GET("/empresa/areas-user/", handler.GetAreasUser)
+	e.GET("empresa/", handler.GetEmpresaUser)
+	e.GET("empresa/areas/", handler.GetAreasUserAdmin)
+	e.GET("empresa/areas-user/", handler.GetAreasUser)
 
-	e.GET("/empresa/areas/:areaName/", handler.GetAreaDetail)
-	e.POST("/empresa/", handler.StoreEmpresa)
-	e.POST("/empresa/create-area/", handler.StoreArea)
-	e.POST("/empresa/add-user-to-area/", handler.AddUserToArea)
-	e.GET("/empresa/area-change-state/:areaId/:areaState/", handler.AreaChangeState)
+	e.GET("empresa/areas/:areaName/", handler.GetAreaDetail)
+	e.POST("empresa/", handler.StoreEmpresa)
+	e.POST("empresa/create-area/", handler.StoreArea)
+	e.POST("empresa/add-user-to-area/", handler.AddUserToArea)
+	e.GET("empresa/area-change-state/:areaId/:areaState/", handler.AreaChangeState)
+	e.GET("empresa/empresa-by-parent-id/",handler.GetEmpresasUser)
 }
+
+
+
+func (u *EmpresaHandler) GetEmpresasUser(c echo.Context) (err error) {
+	token := c.Request().Header["Authorization"][0]
+	claims, err := r.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
+	ctx := c.Request().Context()
+	res, err := u.EmpresaUseCase.GetEmpresas(ctx, &claims.Empresa)
+	if err != nil {
+		logrus.Error(err)
+		return c.JSON(http.StatusNotFound, model.ResponseError{Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
 func (u *EmpresaHandler) AddUserToArea(c echo.Context) (err error) {
 	token := c.Request().Header["Authorization"][0]
 	_, err = r.ExtractClaims(token)
@@ -114,8 +134,7 @@ func (u *EmpresaHandler) StoreArea(c echo.Context) (err error) {
 	area.CreadorId = claims.UserId
 	area.EmpresaId = claims.Empresa
 	ctx := c.Request().Context()
-	id, err := u.EmpresaUseCase.StoreArea(ctx, &area, &claims.Rol)
-	area.Id = id
+	err = u.EmpresaUseCase.StoreArea(ctx, &area)
 	// empresa.Id = casoId
 	if err != nil {
 		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
@@ -171,6 +190,12 @@ func (u *EmpresaHandler) GetEmpresaUser(c echo.Context) (err error) {
 
 func (u *EmpresaHandler) StoreEmpresa(c echo.Context) (err error) {
 	var empresa empresa.Empresa
+
+	token := c.Request().Header["Authorization"][0]
+	claims, err := r.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
 	// token := c.Request().Header["Authorization"][0]
 	// userId,err := r.ExtractClaims(token)
 	// if err != nil {
@@ -180,6 +205,7 @@ func (u *EmpresaHandler) StoreEmpresa(c echo.Context) (err error) {
 	if err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, model.ResponseError{Message: err.Error()})
 	}
+	empresa.ParentId = &claims.Empresa
 	ctx := c.Request().Context()
 	err = u.EmpresaUseCase.StoreEmpresa(ctx, &empresa)
 	log.Println(err)

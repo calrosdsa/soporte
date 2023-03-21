@@ -7,6 +7,7 @@ import (
 
 type CasoQuery struct {
 	Page      int    `json:"page"`
+	PageSize  int    `json:"page_size"`
 	Estado    string `json:"estado"`
 	Prioridad string `json:"prioridad"`
 }
@@ -39,21 +40,27 @@ type Caso struct {
 
 type CasoRepository interface {
 	GetCaso(ctx context.Context, id string) (Caso, error)
-	GetCasosFuncionario(ctx context.Context, id *string, query *CasoQuery) ([]Caso, int, error)
-	GetCasosCliente(ctx context.Context, id *string, query *CasoQuery) ([]Caso, int, error)
-	GetAllCasosUser(ctx context.Context, id string, query *CasoQuery) ([]Caso, int, error)
+	
+	GetCasosCountCliente(ctx context.Context,id string)(int,error)
+	GetCasosCountFuncionario(ctx context.Context,id string)(int,error)
+	GetCasosCountbySuperiorId(ctx  context.Context,id string)(int,error)
+	
+	GetCasosFuncionario(ctx context.Context, id string, query *CasoQuery) ([]Caso, error)
+	GetCasosCliente(ctx context.Context, id string, query *CasoQuery) ([]Caso, error)
+
+	// GetAllCasosUserFuncionario(ctx context.Context,id string,query *CasoQuery)([]Caso,error)
+	GetAllCasosUserCliente(ctx context.Context, id string, query *CasoQuery) ([]Caso, error)
 	StoreCaso(ctx context.Context, cas *Caso, id string, emI int) (idCaso string, err error)
 	UpdateCaso(ctx context.Context, columns []string, values ...interface{}) error
-	AsignarFuncionario(ctx context.Context,id string,idF string) error
+	AsignarFuncionario(ctx context.Context, id string, idF string) error
 	// UploadRecurso(ctx context.Context)
 }
 
 type CasoUseCase interface {
 	GetCaso(ctx context.Context, id string) (res Caso, err error)
-	GetCasosUser(ctx context.Context, id *string, query *CasoQuery,rol *int) (casos []Caso, size int, err error)
+	GetCasosUser(ctx context.Context, id string, query *CasoQuery, rol int) (casos []Caso, size int, err error)
 	GetAllCasosUser(ctx context.Context, id string, query *CasoQuery) ([]Caso, int, error)
 	StoreCaso(ctx context.Context, caso *Caso, id string, emI int) (idCaso string, err error)
 	UpdateCaso(ctx context.Context, columns []string, values ...interface{}) error
-	AsignarFuncionario(ctx context.Context,id string,idF string) error
-
+	AsignarFuncionario(ctx context.Context, id string, idF string) error
 }
