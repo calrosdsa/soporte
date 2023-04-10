@@ -17,7 +17,7 @@ import (
 	// "github.com/spf13/viper"
 
 	// "github.com/spf13/viper"
-	_ws "soporte-go/api/routes"
+	_ws "soporte-go/api/routes/ws"
 	_account "soporte-go/api/routes/account"
 	_caso "soporte-go/api/routes/caso"
 	_empresa "soporte-go/api/routes/empresa"
@@ -76,7 +76,7 @@ func InitServer(db *pgxpool.Pool, db2 *sql.DB, ctx context.Context, sess *sessio
 
 	//empresa
 	empresaRepository := _repository.NewPgEmpresaRepository(db2, ctx)
-	empresaUseCase := _uCase.NewEmpresaUseCase(empresaRepository, timeoutContext)
+	empresaUseCase := _uCase.NewEmpresaUseCase(empresaRepository, timeoutContext,util)
 	_empresa.NewEmpresaHandler(e, empresaUseCase)
 
 	//media

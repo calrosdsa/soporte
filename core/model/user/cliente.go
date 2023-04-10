@@ -51,16 +51,24 @@ type ClienteResponse struct {
 	Rol       int     `json:"rol"`
 }
 
-type UserShortInfo struct {
+type 	UserShortInfo struct {
 	Id        string     `json:"id"`
 	Nombre    string     `json:"nombre"`
 	Apellido  *string     `json:"apellido"`
 	Pendiente bool       `json:"pendiente"`
 	IsAdmin   bool       `json:"is_admin"`
 	Email     *string    `json:"email"`
-	Photo     *string    `json:"photo"`
+	Photo     *string    `json:"profile_photo"`
 	Estado    int        `json:"estado"`
 	DateTime  *time.Time `json:"created_on"`
+}
+
+type UserForList struct {
+	Id        string     `json:"id"`
+	Nombre    string     `json:"nombre"`
+	Apellido  *string     `json:"apellido"`
+	Photo     *string    `json:"profile_photo"`
+	// Estado    int        `json:"estado"`
 }
 
 type UserArea struct {

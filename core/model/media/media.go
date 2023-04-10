@@ -3,6 +3,7 @@ package media
 import (
 	"context"
 	"mime/multipart"
+	"sync"
 	"time"
 )
 type CasoFile struct{
@@ -18,6 +19,8 @@ type CasoFile struct{
 type MediaUseCase interface{
 	UploadFileCaso(ctx context.Context,file *multipart.FileHeader,id string,descripcion string,ext string) (CasoFile,error)
 	GetFileCasos(ctx context.Context,id string)([]CasoFile,error)
+	UploadImage(ctx context.Context,file *multipart.FileHeader,filename string)(url string,err error)
+	UploadImageWithoutCtx(wg *sync.WaitGroup,file *multipart.FileHeader,filename string,urls *[]string)
 }
 
 type MediaRepository interface {

@@ -63,14 +63,25 @@ func (uc *casoUseCase) GetCasosUser(ctx context.Context, id string, query *caso.
 	return
 }
 
-func (uc *casoUseCase) GetAllCasosUser(ctx context.Context, id string, query *caso.CasoQuery) (res []caso.Caso, size int, err error) {
+func (uc *casoUseCase) GetAllCasosUser(ctx context.Context, id string, query *caso.CasoQuery,rol int) (res []caso.Caso, size int, err error) {
 	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
 	defer cancel()
-	size, err = uc.casoRepo.GetCasosCountbySuperiorId(ctx, id)
-	if err != nil {
-		return
+	page, offset := uc.util.PaginationValues(query.Page, query.PageSize)
+	query.Page = page
+	query.PageSize = offset
+	if uc.util.IsClienteAdmin(rol){
+		size, err = uc.casoRepo.GetCasosCountbySuperiorId(ctx, id)
+		if err != nil {
+			return
+		}
+		res, err = uc.casoRepo.GetAllCasosUserCliente(ctx, id, query)
+	}else if uc.util.IsFuncionarioAdmin(rol){
+		size, err = uc.casoRepo.GetCasosCount(ctx)
+		if err != nil {
+			return
+		}
+		res, err = uc.casoRepo.GetAllCasosUserFuncionario(ctx, 0, query)
 	}
-	res, err = uc.casoRepo.GetAllCasosUserCliente(ctx, id, query)
 	return
 }
 

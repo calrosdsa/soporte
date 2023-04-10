@@ -21,12 +21,13 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 
 	// Maximum message size allowed from peer.
-	maxMessageSize = 512
+	maxMessageSize = 1024
 )
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+
 	CheckOrigin: func(r *http.Request) bool {
 		// allow all connections by default
 		return true
@@ -59,41 +60,14 @@ func (s subscription) readPump() {
 	c.ws.SetPongHandler(func(string) error { c.ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		_, msg, err := c.ws.ReadMessage()
-	
-		// empty := make([]byte,3)
-		// builder := strings.Builder{}
-		// builder.Write(msg)
-		// log.Println(builder.String())
-		// if msg != nil {
-		// 	log.Println("lllllllll")
-		// 	log.Println(string(msg))
-		// 	data := &model.Message{}
-		// 	go func(){
-		// 		if err := json.Unmarshal(msg, data); err != nil {
-		// 			log.Printf("No se pudo leer el mensaje:err: %s", err.Error())
-		// 			} else {
-		// 				log.Println(data)
-		// 			}
-		// 			query := `INSERT INTO messages (caso_id,from_user,from_user_id,to_user,content,created) values(?,?,?,?,?,?)`
-		// 			database.ExecuteQuery(query,data.CasoId,data.FromUser,data.FromUserId,data.ToUser,data.Content,time.Now())
-		// 			}()
-		// 		}
-		// // messag := builder.String()
-		// in := []byte(`{"id":1,"name":"test","context":{"key1":"value1","key2":2}}`)
-		// var iot Iot
-		// err := json.Unmarshal(in, &iot)
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// fmt.Println("ctx:", string(iot.Type))
-		// in := []byte(`{"id":1,"name":"test","context":{"key1":"value1","key2":2}}`)
-
+		log.Println("Message",msg)
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
 				log.Printf("error: %v", err)
 			}
 			break
 		}
+		log.Println(msg)
 		m := message{msg, s.room}
 		H.broadcast <- m
 	}
@@ -118,7 +92,10 @@ func (s *subscription) writePump() {
 		case message, ok := <-c.send:
 			if !ok {
 				log.Println("send-event1....")
-				c.write(websocket.CloseMessage, []byte{})
+				err := c.write(websocket.CloseMessage, []byte{})
+				if err != nil {
+					log.Println(err)
+				}
 				return
 			}
 			if err := c.write(websocket.TextMessage, message); err != nil {

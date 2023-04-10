@@ -7,12 +7,10 @@ import (
 
 type Message struct {
 	Id              int    `json:"id"`
-	ClienteId       string `json:"client_id"`
-	FuncionarioId   string `json:"funcioanrio_id"`
+	FromUser       string `json:"from_user"`
+	ToUser   string `json:"to_user"`
 	CasoId          string `json:"caso_id"`
-	ClienteName     string `json:"client_name"`
-	FuncionarioName string `json:"funcionario_name"`
-	MediaUrl        string `json:"media_url"`
+	MediaUrl        *[]string `json:"media_url"`
 	Content         string `json:"content"`
 	IsRead          bool   `json:"is_read"`
 	CreatedOn       *time.Time `json:"created_on"`
@@ -20,12 +18,10 @@ type Message struct {
 }
 
 type MessageData struct {
-	ClienteId       string  `json:"client_id"`
-	FuncionarioId   string  `json:"funcionario_id"`
+	FromUser       string  `json:"from_user"`
+	ToUser   string  `json:"to_user"`
 	CasoId          string  `json:"caso_id"`
-	ClienteName     string  `json:"client_name"`
-	FuncionarioName string  `json:"funcionario_name"`
-	MediaUrl        *string `json:"media_url"`
+	MediaUrl        *[]string `json:"media_url"`
 	Content         string  `json:"content"`
 	IsRead          *bool   `json:"is_read"`
 }
@@ -33,4 +29,10 @@ type MessageData struct {
 type WsRepository interface {
 	GetMessages(ctx context.Context, casoId string) ([]Message, error)
 	SaveMessage(ctx context.Context, m *MessageData) (Message, error)
+}
+
+
+type WsUseCase interface {
+	GetMessages(ctx context.Context, casoId string) ([]Message, error)
+
 }

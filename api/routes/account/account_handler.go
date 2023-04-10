@@ -59,7 +59,7 @@ func (a *AccountHandler) RegisterUser(c echo.Context) (err error) {
 	user.Email = claims.Email
 	user.Rol = claims.Rol
 	user.EmpresaId = claims.EmpresaId
-	user.SuperiorId = claims.Id
+	user.SuperiorId = &claims.Id
 
 	var ok bool
 	if ok, err = isRequestValid(&user); !ok {

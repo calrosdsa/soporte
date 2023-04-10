@@ -27,10 +27,26 @@ func NewCasoHandler(e *echo.Echo, uc caso.CasoUseCase) {
 	e.POST("/caso/", handler.StoreCaso)
 	e.GET("/caso/:casoId/", handler.GetCaso)
 	e.GET("/casos", handler.GetCasosUser)
-	e.GET("/casos-all", handler.GetAllCasosUser)
+	e.GET("/casos-all/", handler.GetAllCasosUser)
 	
 	e.GET("/caso/asignar-funcionario/:idCaso/:idFuncionario/",handler.AsignarFuncionario)
 }
+
+// func (u *CasoHandler) (c echo.Context) (err error) {
+// 	token := c.Request().Header["Authorization"][0]
+// 	_, err = _routes.ExtractClaims(token)
+// 	if err != nil {
+// 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+// 	}
+// 	id := c.Param("idCaso")
+// 	idF := c.Param("idFuncionario")
+// 	ctx := c.Request().Context()
+// 	err = u.CasoUseCase.AsignarFuncionario(ctx,id,idF)
+// 	if err != nil {
+// 		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
+// 	}
+// 	return c.JSON(http.StatusOK,"Ok")
+// }
 
 func (u *CasoHandler) AsignarFuncionario(c echo.Context) (err error) {
 	token := c.Request().Header["Authorization"][0]
@@ -45,7 +61,7 @@ func (u *CasoHandler) AsignarFuncionario(c echo.Context) (err error) {
 	if err != nil {
 		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
 	}
-	return c.JSON(http.StatusOK,nil)
+	return c.JSON(http.StatusOK,"Ok")
 }
 
 func (u *CasoHandler) GetAllCasosUser(c echo.Context) (err error) {
@@ -69,7 +85,7 @@ func (u *CasoHandler) GetAllCasosUser(c echo.Context) (err error) {
 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	ctx := c.Request().Context()
-	res, size, err := u.CasoUseCase.GetAllCasosUser(ctx, claims.UserId, &casoQuery)
+	res, size, err := u.CasoUseCase.GetAllCasosUser(ctx, claims.UserId, &casoQuery,claims.Rol)
 	if err != nil {
 		logrus.Error(err)
 		return c.JSON(http.StatusNotFound, model.ResponseError{Message: err.Error()})

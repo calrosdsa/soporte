@@ -44,22 +44,41 @@ func NewUserHandler(e *echo.Echo, us user.UserUseCases) {
 	e.GET("user/cancel-invitation/", handler.CancelInvitation)
 	e.GET("user/search/", handler.SearchUser)
 	e.GET("user/add-user-list/:areaId/", handler.GetUserFiltered)
-	e.GET("user/users-empresa/:emId/",handler.GetUsersbyEmpresaId)
+	e.GET("user/users-empresa/:emId/", handler.GetUsersbyEmpresaId)
+	e.GET("user/users-empresa-by-rol/:emId/:rol/", handler.GetUsersEmpresaByRol)
 }
 
-func (u *UserHandler)GetUsersbyEmpresaId(c echo.Context)(err error){
+
+
+func (u *UserHandler) GetUsersEmpresaByRol(c echo.Context) (err error) {
+	token := c.Request().Header["Authorization"][0]
+	_, err = r.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
+	rol, _ := strconv.Atoi(c.Param("rol"))
+	ctx := c.Request().Context()
+	emId, _ := strconv.Atoi(c.Param("emId"))
+	res, err := u.UserUcase.GetUsersEmpresaByRol(ctx, emId, rol)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ResponseError{Message: err.Error()})
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
+func (u *UserHandler) GetUsersbyEmpresaId(c echo.Context) (err error) {
 	token := c.Request().Header["Authorization"][0]
 	_, err = r.ExtractClaims(token)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	ctx := c.Request().Context()
-	emId,_:= strconv.Atoi(c.Param("emId"))
-	res,err := u.UserUcase.GetUsersbyEmpresaId(ctx,emId)
+	emId, _ := strconv.Atoi(c.Param("emId"))
+	res, err := u.UserUcase.GetUsersbyEmpresaId(ctx, emId)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError,model.ResponseError{Message: err.Error()})
+		c.JSON(http.StatusInternalServerError, model.ResponseError{Message: err.Error()})
 	}
-	return c.JSON(http.StatusOK,res)
+	return c.JSON(http.StatusOK, res)
 }
 
 func (a *UserHandler) GetUserFiltered(c echo.Context) (err error) {
@@ -71,7 +90,7 @@ func (a *UserHandler) GetUserFiltered(c echo.Context) (err error) {
 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	ctx := c.Request().Context()
-	res, err := a.UserUcase.GetUserAddList(ctx,id, claims.Rol,claims.UserId)
+	res, err := a.UserUcase.GetUserAddList(ctx, id, claims.Rol, claims.UserId)
 	if err != nil {
 		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
 	}
@@ -161,7 +180,7 @@ func (a *UserHandler) GetUserList(c echo.Context) (err error) {
 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	ctx := c.Request().Context()
-	res, err := a.UserUcase.GetUsersShortIInfo(ctx, claims.UserId, claims.Rol,claims.Empresa)
+	res, err := a.UserUcase.GetUsersShortIInfo(ctx, claims.UserId, claims.Rol, claims.Empresa)
 	if err != nil {
 		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
 	}
@@ -177,6 +196,7 @@ func (a *UserHandler) UserRegisterInvitation(c echo.Context) (err error) {
 	var to user.UserRegistrationRequest
 	err = c.Bind(&to)
 	if err != nil {
+		log.Println(err)
 		return c.JSON(http.StatusUnprocessableEntity, err.Error())
 	}
 	var rol int
@@ -187,25 +207,25 @@ func (a *UserHandler) UserRegisterInvitation(c echo.Context) (err error) {
 			rol = 0
 		}
 		claims.Empresa = to.EmpresaId
-	}else {
+	} else {
 		if claims.Rol == int(model.RoleClienteAdmin) {
 			if to.IsAdmin {
-			rol = 2
+				rol = 2
+			} else {
+				rol = 0
+			}
+		} else if claims.Rol == int(model.RoleFuncionarioAdmin) {
+			if to.IsAdmin {
+				rol = 3
+			} else {
+				rol = 1
+			}
 		} else {
-			rol = 0
+			return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: errors.New("no rol presente en jwt token").Error()})
 		}
-	} else if claims.Rol == int(model.RoleFuncionarioAdmin) {
-		if to.IsAdmin {
-			rol = 3
-		} else {
-			rol = 1
-		}
-	} else {
-		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: errors.New("no rol presente en jwt token").Error()})
+		// log.Println(rol)
 	}
-	// log.Println(rol)
-    }
-	
+
 	ctx := c.Request().Context()
 	res, err := a.UserUcase.UserRegisterInvitation(ctx, &to, claims.UserId, rol, claims.Empresa)
 	// log.Println(url)

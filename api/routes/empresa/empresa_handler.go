@@ -24,7 +24,7 @@ func NewEmpresaHandler(e *echo.Echo, u empresa.EmpresaUseCase) {
 	}
 
 	e.GET("empresa/", handler.GetEmpresaUser)
-	e.GET("empresa/areas/", handler.GetAreasUserAdmin)
+	e.GET("empresa/areas/", handler.GetAreasFromUser)
 	e.GET("empresa/areas-user/", handler.GetAreasUser)
 
 	e.GET("empresa/areas/:areaName/", handler.GetAreaDetail)
@@ -32,10 +32,89 @@ func NewEmpresaHandler(e *echo.Echo, u empresa.EmpresaUseCase) {
 	e.POST("empresa/create-area/", handler.StoreArea)
 	e.POST("empresa/add-user-to-area/", handler.AddUserToArea)
 	e.GET("empresa/area-change-state/:areaId/:areaState/", handler.AreaChangeState)
-	e.GET("empresa/empresa-by-parent-id/",handler.GetEmpresasUser)
+	e.GET("empresa/empresa-by-parent-id/", handler.GetEmpresasUser)
+	e.POST("empresa/create-sub-area/", handler.CreateSubArea)
+	e.GET("empresa/sub-areas/:parentId/", handler.GetSubAreas)
+	e.GET("empresa/areas-empresa/:empresaId/", handler.GetAreasEmpresa)
+	e.GET("empresa/users-area-by-area/:areaId/", handler.GetUsersAreaByAreaId)
+
 }
 
+func (u *EmpresaHandler) GetUsersAreaByAreaId(c echo.Context) (err error) {
+	token := c.Request().Header["Authorization"][0]
+	_, err = r.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
+	areaId,_ := strconv.Atoi(c.Param("areaId"))
+	ctx := c.Request().Context()
+	// parentId,_:= strconv.Atoi(c.Param("parentId"))
+	res, err := u.EmpresaUseCase.GetUsersAreaByAreaId(ctx, areaId)
+	if err != nil {
+		// logrus.Error(err)
+		return c.JSON(http.StatusNotFound, model.ResponseError{Message: err.Error()})
+	}
 
+	return c.JSON(http.StatusOK, res)
+}
+
+func (u *EmpresaHandler) GetAreasEmpresa(c echo.Context) (err error) {
+	token := c.Request().Header["Authorization"][0]
+	claims, err := r.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
+	ctx := c.Request().Context()
+	empresaId,_:= strconv.Atoi(c.Param("empresaId"))
+	log.Println(empresaId)
+	res, err := u.EmpresaUseCase.GetAreasEmpresa(ctx, claims.Empresa)
+	if err != nil {
+		// logrus.Error(err)
+		return c.JSON(http.StatusNotFound, model.ResponseError{Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+func (u *EmpresaHandler) GetSubAreas(c echo.Context) (err error) {
+	token := c.Request().Header["Authorization"][0]
+	_, err = r.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
+	ctx := c.Request().Context()
+	parentId, _ := strconv.Atoi(c.Param("parentId"))
+	res, err := u.EmpresaUseCase.GetSubAreas(ctx, parentId)
+	if err != nil {
+		// logrus.Error(err)
+		return c.JSON(http.StatusNotFound, model.ResponseError{Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+func (u *EmpresaHandler) CreateSubArea(c echo.Context) (err error) {
+	var subArea empresa.SubArea
+	token := c.Request().Header["Authorization"][0]
+	claims, err := r.ExtractClaims(token)
+
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
+	err = c.Bind(&subArea)
+	if err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, model.ResponseError{Message: err.Error()})
+	}
+	subArea.CreadorId = claims.UserId
+	subArea.EmpresaParentId = claims.Empresa
+	ctx := c.Request().Context()
+	err = u.EmpresaUseCase.CreateSubArea(ctx, &subArea)
+	// empresa.Id = casoId
+	if err != nil {
+		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
+	}
+	return c.JSON(http.StatusOK, subArea)
+}
 
 func (u *EmpresaHandler) GetEmpresasUser(c echo.Context) (err error) {
 	token := c.Request().Header["Authorization"][0]
@@ -142,14 +221,14 @@ func (u *EmpresaHandler) StoreArea(c echo.Context) (err error) {
 	return c.JSON(http.StatusCreated, area)
 }
 
-func (u *EmpresaHandler) GetAreasUserAdmin(c echo.Context) (err error) {
+func (u *EmpresaHandler) GetAreasFromUser(c echo.Context) (err error) {
 	token := c.Request().Header["Authorization"][0]
 	claims, err := r.ExtractClaims(token)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	ctx := c.Request().Context()
-	res, err := u.EmpresaUseCase.GetAreasUserAdmin(ctx, &claims.UserId, &claims.Rol)
+	res, err := u.EmpresaUseCase.GetAreasFromUser(ctx, claims.UserId, claims.Empresa, claims.Rol)
 	if err != nil {
 		logrus.Error(err)
 		return c.JSON(http.StatusNotFound, model.ResponseError{Message: err.Error()})

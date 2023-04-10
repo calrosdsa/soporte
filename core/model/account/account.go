@@ -25,7 +25,7 @@ type RegisterForm struct {
 	Username   *string `json:"username,omitempty"`
 	Password   *string `json:"password"`
 	EmpresaId  int     `json:"empresa_id,omitempty"`
-	SuperiorId string  `json:"superior_id"`
+	SuperiorId *string  `json:"superior_id"`
 	Email      string `json:"email"`
 	// IsAdmin    bool    `json:"is_admiin"`
 	Rol int `json:"rol,omitempty"`

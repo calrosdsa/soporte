@@ -7,9 +7,9 @@ import (
 )
 
 type UserRegistrationRequest struct {
-	To      []string `json:"to"`
-	IsAdmin bool     `json:"is_admin"`
-	EmpresaId int `json:"empresa_id"`
+	To        []string `json:"to"`
+	IsAdmin   bool     `json:"is_admin"`
+	EmpresaId int      `json:"empresa_id"`
 }
 
 type UserUseCases interface {
@@ -23,29 +23,35 @@ type UserUseCases interface {
 	GetFuncionarios(ctx context.Context) ([]Funcionario, error)
 	GetFuncionarioById(ctx context.Context, id string) (Funcionario, error)
 
-	GetUsersShortIInfo(ctx context.Context, id string,rol int,emId int) ([]UserShortInfo, error)
+	GetUsersShortIInfo(ctx context.Context, id string, rol int, emId int) ([]UserShortInfo, error)
 
 	ValidateEmail(ctx context.Context, email string) error
 	ReSendEmail(m []string, url string)
 	DeleteInvitation(ctx context.Context, m string) (err error)
-	GetUserAddList(ctx context.Context, f int,rol int,sId string) ([]UserArea, error)
+	GetUserAddList(ctx context.Context, f int, rol int, sId string) ([]UserArea, error)
 	SearchUser(ctx context.Context, id string, q string) ([]UserShortInfo, error)
 
-	GetUsersbyEmpresaId(ctx context.Context,emId int)([]UserShortInfo,error	)
+	GetUsersbyEmpresaId(ctx context.Context, emId int) ([]UserForList, error)
+
+	GetUsersEmpresaByRol(ctx context.Context, emId int, rol int) ([]UserForList, error)
+
+	// GetUsersEmpresa(ctx context.Context, emId int,rol int) ([]UserForList, error)
 }
 
 type UserRepository interface {
-
 	GetUsersShortIInfoC(ctx context.Context, id string) ([]UserShortInfo, error)
 	GetUsersShortIInfoF(ctx context.Context, emID int) ([]UserShortInfo, error)
 
 	// GetUsersShortIInfo(ctx context.Context, id string, rol int) ([]UserShortInfo, error)
 	GetInvitaciones(ctx context.Context, id string) ([]UserShortInfo, error)
-	CreateUserInvitation(ctx context.Context, us *UserShortInfo, rol int) (UserShortInfo, error)
 
-	GetClientesEmpresa(ctx context.Context,emId int)([]UserShortInfo,error)
+	CreateUserInvitationF(ctx context.Context, us *UserShortInfo) (UserShortInfo, error)
+	CreateUserInvitationC(ctx context.Context, us *UserShortInfo) (UserShortInfo, error)
+
+	
+	GetClientesEmpresaByRol(ctx context.Context, emId int, rol int) ([]UserShortInfo, error)
 	// CreateCliente(ctx context.Context,user *Cliente ) (res string,err error)
-	GetUserAddList(ctx context.Context, f int, rol int,sId string) ([]UserArea, error)
+	GetUserAddList(ctx context.Context, f int, rol int, sId string) ([]UserArea, error)
 	GetClientesByArea(context.Context, int) ([]UserArea, error)
 	UpdateCliente(ctx context.Context, columns []string, values ...interface{}) error
 	UpdateFuncionario(ctx context.Context, columns []string, values ...interface{}) error
@@ -56,4 +62,7 @@ type UserRepository interface {
 	ValidateEmail(ctx context.Context, m string) error
 	DeleteInvitation(ctx context.Context, m string) (err error)
 	SearchUser(ctx context.Context, id string, q string) ([]UserShortInfo, error)
+	
+	GetClientesEmpresa(ctx context.Context, emId int) ([]UserForList, error)
+	GetFuncionariosEmpresa(ctx context.Context, emId int) ([]UserForList, error)
 }

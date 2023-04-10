@@ -49,9 +49,13 @@ func (p *pgAccountRepository) DeleteUser(ctx context.Context, id string) (err er
 
 func (p *pgAccountRepository) Login(ctx context.Context, loginRequest *account.LoginRequest) (res user.UserAuth, err error) {
 	var userId string
+	// log.Println(loginRequest.Email)
+	// log.Println(loginRequest.Password)
 	query := `select user_id from users where email = $1 and password = crypt($2, password);`
 	err = p.Conn.QueryRow(ctx, query, loginRequest.Email, loginRequest.Password).Scan(&userId)
 	if err != nil {
+		log.Println(err)
+		// log.Println("error is here")
 		return res, model.ErrNotFound
 	}
 	res = user.UserAuth{}
@@ -112,7 +116,8 @@ func (p *pgAccountRepository) RegisterCliente(ctx context.Context, a *account.Re
 			return user.UserAuth{}, errors.New("yste nombre ya esta ocupado")
 		}
 	}
-	query2 := `insert into users (email,username,created_on,password) values ($1,$2,now(),crypt($3, gen_salt('bf'))) returning (user_id);`
+	query2 := `insert into users (email,username,created_on,password) values ($1,$2,now(),crypt($3, gen_salt('bf')))
+	returning (user_id);`
 	var userId string
 	err = conn.QueryRow(p.Context, query2, a.Email, a.Username, a.Password).Scan(&userId)
 	if err != nil {
@@ -120,9 +125,9 @@ func (p *pgAccountRepository) RegisterCliente(ctx context.Context, a *account.Re
 	}
 	cliente := user.UserAuth{}
 	log.Println(reflect.TypeOf(a.EmpresaId))
-	query3 := `insert into clientes (nombre,email,empresa_id,created_on,user_id,superior_id,rol) values ($1,$2,$3,$4,$5,$6,$7)
-	returning (client_id,nombre,email,empresa_id,user_id);`
-	err = conn.QueryRow(p.Context, query3, a.Username, a.Email, a.EmpresaId, time.Now(), userId, a.SuperiorId, a.Rol).Scan(&cliente)
+	query3 := `insert into clientes (nombre,email,empresa_id,created_on,user_id,rol,superior_id) values ($1,$2,$3,$4,$5,$6,$7)
+	returning (client_id,email,estado,rol,empresa_id,(''));`
+	err = conn.QueryRow(p.Context, query3, a.Username, a.Email, a.EmpresaId, time.Now(), userId, a.Rol,a.SuperiorId).Scan(&cliente)
 	if err != nil {
 		return user.UserAuth{}, err
 	}
@@ -167,19 +172,19 @@ func (p *pgAccountRepository) RegisterFuncionario(ctx context.Context, a *accoun
 	if err != nil {
 		return
 	}
-	var superiorId string
+	// var superiorId string
 	// log.Println(a.SuperiorId)
-	query = `select superior_id from funcionarios where funcionario_id = $1;`
-	err = conn.QueryRow(p.Context, query, a.SuperiorId).Scan(&superiorId)
-	if err != nil {
-		log.Println("error is here")
-		return
-	}
+	// query = `select superior_id from funcionarios where funcionario_id = $1;`
+	// err = conn.QueryRow(p.Context, query, a.SuperiorId).Scan(&superiorId)
+	// if err != nil {
+	// 	log.Println("error is here")
+	// 	return
+	// }
 	// log.Panicln("USER INSERTED")
 	res = user.UserAuth{}
-	query = `insert into funcionarios (nombre,email,empresa_id,created_on,user_id,superior_id,rol) values ($1,$2,$3,$4,$5,$6,$7)
+	query = `insert into funcionarios (nombre,email,empresa_id,created_on,user_id,rol,superior_id) values ($1,$2,$3,$4,$5,$6,$7)
 	returning (funcionario_id,email,estado,rol,empresa_id,(''));`
-	err = conn.QueryRow(p.Context, query, a.Username, a.Email, a.EmpresaId, time.Now(), userId, superiorId, a.Rol).Scan(&res)
+	err = conn.QueryRow(p.Context, query, a.Username, a.Email, a.EmpresaId, time.Now(), userId,a.Rol,a.SuperiorId).Scan(&res)
 	// log.Println(*t.Username)
 	if err != nil {
 		return

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log"
 	"soporte-go/core/model/ws"
 	"time"
 
@@ -24,13 +25,17 @@ func NewWsRepository(conn *pgxpool.Pool, ctx context.Context) ws.WsRepository {
 func (p *wsRepository) GetMessages(ctx context.Context, casoId string)(res []ws.Message,err error){
 	query := `select * from messages where caso_id = $1;`
 	res,err = p.fetchMessages(ctx,query,casoId)
+	
 	return
 }
 
 func (p *wsRepository) SaveMessage(ctx context.Context,m *ws.MessageData)(res ws.Message,err error){
-	query := `insert into messages (client_id,funcionario_id,caso_id,client_name,funcionario_name,media_url,content,is_read,created_on) 
-	values ($1,$2,$3,$4,$5,$6,$7,$8,$9);`
-	_,err = p.Conn.Exec(ctx,query,m.ClienteId,m.FuncionarioId,m.CasoId,m.ClienteName,m.FuncionarioName,m.MediaUrl,m.Content,m.IsRead,time.Now())
+	var message ws.Message;
+	query := `insert into messages (from_user,to_user,caso_id,media_url,content,is_read,created_on) 
+	values ($1,$2,$3,$4,$5,$6,$7) returning (id,from_user,to_user,caso_id,media_url,content,is_read,created_on,is_deleted);`
+	err = p.Conn.QueryRow(ctx,query,m.FromUser,m.ToUser,m.CasoId,m.MediaUrl,m.Content,m.IsRead,time.Now()).Scan(&message)
+	log.Println(err)
+	log.Println(message.Id)
 	return
 }
 
@@ -49,10 +54,8 @@ func (p *wsRepository) fetchMessages(ctx context.Context, query string, args ...
 		err = rows.Scan(
 			&t.Id,
 			&t.CasoId,
-			&t.ClienteId,
-			&t.FuncionarioId,
-			&t.ClienteName,
-			&t.FuncionarioName,
+			&t.FromUser,
+			&t.ToUser,
 			&t.MediaUrl,
 			&t.Content,
 			&t.IsRead,

@@ -36,10 +36,32 @@ func NewUserUseCases(u user.UserRepository, timeout time.Duration, g *gomail.Dia
 	}
 }
 
-func (a *userUseCase) GetUsersbyEmpresaId(ctx context.Context,emId int) (res []user.UserShortInfo,err error) {
+// func(a *userUseCase)GetUsersEmpresa(ctx context.Context,emId int,rol int)(res []user.UserForList,err error){
+// 	ctx,cancel := context.WithTimeout(ctx,a.contextTimeout)
+// 	defer cancel()
+// 	if a.util.IsClienteAdmin(rol){
+// 		res,err = a.userRepo.GetClientesEmpresa(ctx,emId)
+// 	} else if a.util.IsFuncionarioAdmin(rol) {
+// 		res,err = a.userRepo.GetFuncionariosEmpresa(ctx,emId)
+// 	}
+// 	return
+// }
+
+func (a *userUseCase) GetUsersbyEmpresaId(ctx context.Context,emId int) (res []user.UserForList,err error) {
 	ctx, cancel := context.WithTimeout(ctx,a.contextTimeout)
 	defer cancel()
 	res,err = a.userRepo.GetClientesEmpresa(ctx,emId)
+	return
+}
+
+func (a *userUseCase) GetUsersEmpresaByRol(ctx context.Context,emId int,rol int) (res []user.UserForList,err error) {
+	ctx,cancel := context.WithTimeout(ctx,a.contextTimeout)
+	defer cancel()
+	if a.util.IsClienteAdmin(rol){
+		res,err = a.userRepo.GetClientesEmpresa(ctx,emId)
+	} else if a.util.IsFuncionarioAdmin(rol) {
+		res,err = a.userRepo.GetFuncionariosEmpresa(ctx,emId)
+	}
 	return
 }
 
@@ -97,23 +119,32 @@ func (a *userUseCase) ReSendEmail(m []string, url string) {
 	a.sendEmail(m, url)
 }
 
-func (a *userUseCase) UserRegisterInvitation(ctx context.Context, to *user.UserRegistrationRequest, id string, rol int, empresaId int) (res []user.UserShortInfo, err error) {
+func (a *userUseCase) UserRegisterInvitation(ctx context.Context, to *user.UserRegistrationRequest,
+	 id string, rol int, empresaId int) (res []user.UserShortInfo, err error) {
 	ctx, cancel := context.WithTimeout(ctx, a.contextTimeout)
 	defer cancel()
 	invitations := make([]user.UserShortInfo, len(to.To))
 	for index, value := range to.To {
-		tokenInvitation, _ := jwt.GenerateInvitationJWT(id, rol, empresaId, value)
+		tokenInvitation, _ := jwt.GenerateInvitationJWT(id, rol, to.EmpresaId, value)
 		url := fmt.Sprintf("http://localhost:3000/auth/registro?auth=%s", tokenInvitation)
 		t := user.UserShortInfo{
 			Nombre:  value,
 			Id:      id,
 			IsAdmin: to.IsAdmin,
 		}
-		val, _ := a.userRepo.CreateUserInvitation(ctx, &t, rol)
+		if a.util.IsClienteRol(rol){
+			val, err := a.userRepo.CreateUserInvitationC(ctx, &t)
+			log.Println(err)
+			invitations[index] = val
+		}else if a.util.IsFuncionarioRol(rol){
+			val, err := a.userRepo.CreateUserInvitationF(ctx, &t)
+			log.Println(err)
+			invitations[index] = val
+		}
+		// log.Println(err)
 		// if err != nil{
 		// 	return nil,err
 		// }
-		invitations[index] = val
 		a.sendEmail(to.To, url)
 	}
 

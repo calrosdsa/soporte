@@ -45,7 +45,7 @@ func (h *hub) Run(re ws.WsRepository) {
 	for {
 		select {
 		case s := <-h.register:
-			log.Println("registrando")
+			// log.Println("registrando")
 			// log.Println(s.room)
 			// log.Println(s.room)
 			// query := `SELECT * FROM messages WHERE caso_id = ?`
@@ -67,16 +67,16 @@ func (h *hub) Run(re ws.WsRepository) {
 			// log.Println(connections)
 			// log.Println("si room")
 			h.rooms[s.room][s.conn] = true
-			res,err := re.GetMessages(ctx,s.room)
-			if err != nil {
-				log.Println(err)
-			}
-			jsonStr ,err := json.Marshal(res)
-			if err != nil {
-				log.Println(err)
-			}else{
-				s.conn.send <- jsonStr
-			}
+			// res,err := re.GetMessages(ctx,s.room)
+			// if err != nil {
+			// 	log.Println(err)
+			// }
+			// jsonStr ,err := json.Marshal(res)
+			// if err != nil {
+			// 	log.Println(err)
+			// }else{
+			// 	s.conn.send <- jsonStr
+			// }
 		case s := <-h.unregister:
 			log.Println("Unregister connection")
 			connections := h.rooms[s.room]
@@ -99,10 +99,12 @@ func (h *hub) Run(re ws.WsRepository) {
 			if err != nil {
 				log.Println(err)
 			}
-			_,err = re.SaveMessage(ctx,msgData)
+			msg,err := re.SaveMessage(ctx,msgData)
 			if err != nil{
+				log.Println("fail to save message")
 				log.Println(err)
 			}
+			log.Println("Message Saved",msg.Content)
 			log.Println(msgData)
 			// log.Println(connections)
 			for c := range connections {
