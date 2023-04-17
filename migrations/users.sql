@@ -11,7 +11,6 @@ create table if not exists clientes (
     created_on TIMESTAMP NOT NULL,
     updated_on TIMESTAMP,
     user_id VARCHAR NOT NULL,
-    areas INT[],
     estado INT DEFAULT 0,
     profile_photo TEXT,
     is_admin BOOLEAN DEFAULT false,
@@ -33,7 +32,6 @@ create table if not exists funcionarios (
     updated_on TIMESTAMP,
     user_id VARCHAR NOT NULL,
     estado INT DEFAULT 0,
-    areas INT[],
     profile_photo TEXT,
     is_admin BOOLEAN DEFAULT false,
     rol INT

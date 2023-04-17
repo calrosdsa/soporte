@@ -91,7 +91,7 @@ func (h *hub) Run(re ws.WsRepository) {
 			}
 		case m := <-h.broadcast:
 			connections := h.rooms[m.room]
-			log.Println("Sending data")
+			// log.Println("Sending data")
 			log.Println(string(m.data))
 		
 			msgData := &ws.MessageData{}
@@ -99,13 +99,13 @@ func (h *hub) Run(re ws.WsRepository) {
 			if err != nil {
 				log.Println(err)
 			}
-			msg,err := re.SaveMessage(ctx,msgData)
+			_,err = re.SaveMessage(ctx,msgData)
 			if err != nil{
 				log.Println("fail to save message")
 				log.Println(err)
 			}
-			log.Println("Message Saved",msg.Content)
-			log.Println(msgData)
+			// log.Println("Message Saved",msg.Content)
+			// log.Println(msgData)
 			// log.Println(connections)
 			for c := range connections {
 				select {

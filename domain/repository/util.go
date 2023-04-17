@@ -28,6 +28,10 @@ func (r *RoleHandler) IsFuncionarioAdmin(rol int) (b bool) {
 	return int(model.RoleFuncionarioAdmin) == rol
 }
 
+func (r *RoleHandler) IsAdminFuncionario(rol int) (b bool) {
+	return int(model.RoleAdmin) == rol
+}
+
 func (r *RoleHandler) IsFuncionarioRol(rol int) (b bool) {
 	return int(model.RoleFuncionario) == rol || int(model.RoleFuncionarioAdmin) == rol
 }

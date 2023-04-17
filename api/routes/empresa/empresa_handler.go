@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"soporte-go/core/model/empresa"
 	"strconv"
+	// "time"
 
 	// "github.com/golang-jwt/jwt"
 	r "soporte-go/api/routes"
@@ -33,28 +34,46 @@ func NewEmpresaHandler(e *echo.Echo, u empresa.EmpresaUseCase) {
 	e.POST("empresa/add-user-to-area/", handler.AddUserToArea)
 	e.GET("empresa/area-change-state/:areaId/:areaState/", handler.AreaChangeState)
 	e.GET("empresa/empresa-by-parent-id/", handler.GetEmpresasUser)
-	e.POST("empresa/create-sub-area/", handler.CreateSubArea)
-	e.GET("empresa/sub-areas/:parentId/", handler.GetSubAreas)
+	e.POST("empresa/create-proyecto/", handler.CreateProyecto)
+	e.GET("empresa/proyectos/:parentId/", handler.GetSubAreas)
 	e.GET("empresa/areas-empresa/:empresaId/", handler.GetAreasEmpresa)
-	e.GET("empresa/users-area-by-area/:areaId/", handler.GetUsersAreaByAreaId)
+	e.GET("empresa/funcionarios-by-area/:areaId/", handler.GetFuncionariosByAreaId)
+	e.GET("empresa/clientes-by-area/:areaId/", handler.GetClientesByAreaId)
 
 }
 
-func (u *EmpresaHandler) GetUsersAreaByAreaId(c echo.Context) (err error) {
+func (u *EmpresaHandler) GetClientesByAreaId(c echo.Context) (err error) {
 	token := c.Request().Header["Authorization"][0]
 	_, err = r.ExtractClaims(token)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
-	areaId,_ := strconv.Atoi(c.Param("areaId"))
+	areaId, _ := strconv.Atoi(c.Param("areaId"))
 	ctx := c.Request().Context()
 	// parentId,_:= strconv.Atoi(c.Param("parentId"))
-	res, err := u.EmpresaUseCase.GetUsersAreaByAreaId(ctx, areaId)
+	res, err := u.EmpresaUseCase.GetClientesByAreaId(ctx, areaId)
 	if err != nil {
 		// logrus.Error(err)
 		return c.JSON(http.StatusNotFound, model.ResponseError{Message: err.Error()})
 	}
 
+	return c.JSON(http.StatusOK, res)
+}
+
+func (u *EmpresaHandler) GetFuncionariosByAreaId(c echo.Context) (err error) {
+	token := c.Request().Header["Authorization"][0]
+	_, err = r.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
+	areaId, _ := strconv.Atoi(c.Param("areaId"))
+	ctx := c.Request().Context()
+	// parentId,_:= strconv.Atoi(c.Param("parentId"))
+	res, err := u.EmpresaUseCase.GetFuncionariosByAreaId(ctx, areaId)
+	if err != nil {
+		// logrus.Error(err)
+		return c.JSON(http.StatusNotFound, model.ResponseError{Message: err.Error()})
+	}
 	return c.JSON(http.StatusOK, res)
 }
 
@@ -65,9 +84,9 @@ func (u *EmpresaHandler) GetAreasEmpresa(c echo.Context) (err error) {
 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	ctx := c.Request().Context()
-	empresaId,_:= strconv.Atoi(c.Param("empresaId"))
+	empresaId, _ := strconv.Atoi(c.Param("empresaId"))
 	log.Println(empresaId)
-	res, err := u.EmpresaUseCase.GetAreasEmpresa(ctx, claims.Empresa)
+	res, err := u.EmpresaUseCase.GetAreas(ctx, claims.Empresa,claims.UserId,claims.Rol)
 	if err != nil {
 		// logrus.Error(err)
 		return c.JSON(http.StatusNotFound, model.ResponseError{Message: err.Error()})
@@ -84,7 +103,7 @@ func (u *EmpresaHandler) GetSubAreas(c echo.Context) (err error) {
 	}
 	ctx := c.Request().Context()
 	parentId, _ := strconv.Atoi(c.Param("parentId"))
-	res, err := u.EmpresaUseCase.GetSubAreas(ctx, parentId)
+	res, err := u.EmpresaUseCase.GetProyectos(ctx, parentId)
 	if err != nil {
 		// logrus.Error(err)
 		return c.JSON(http.StatusNotFound, model.ResponseError{Message: err.Error()})
@@ -93,8 +112,8 @@ func (u *EmpresaHandler) GetSubAreas(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, res)
 }
 
-func (u *EmpresaHandler) CreateSubArea(c echo.Context) (err error) {
-	var subArea empresa.SubArea
+func (u *EmpresaHandler) CreateProyecto(c echo.Context) (err error) {
+	var subArea empresa.Proyecto
 	token := c.Request().Header["Authorization"][0]
 	claims, err := r.ExtractClaims(token)
 
@@ -107,9 +126,16 @@ func (u *EmpresaHandler) CreateSubArea(c echo.Context) (err error) {
 	}
 	subArea.CreadorId = claims.UserId
 	subArea.EmpresaParentId = claims.Empresa
+	// log.Println(subArea.Start)
+	// date, err := time.Parse("2006-01-02", subArea.Start)	
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return
+	// }
+	// log.Println(date)
+	// s :="15:49:55 2023-04-14T15:49"
 	ctx := c.Request().Context()
-	err = u.EmpresaUseCase.CreateSubArea(ctx, &subArea)
-	// empresa.Id = casoId
+	err = u.EmpresaUseCase.CreateProyecto(ctx, &subArea)
 	if err != nil {
 		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
 	}

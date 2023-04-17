@@ -29,6 +29,9 @@ CREATE TABLE if not exists casos  (
     client_id uuid NOT NULL,
     funcionario_id uuid,
     superior_id uuid,
+    status INT DEFAULT 0,
+    -- rol user creador
+    rol INT,
     PRIMARY KEY (id)
 );
 

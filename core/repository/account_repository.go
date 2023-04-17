@@ -104,7 +104,7 @@ func (p *pgAccountRepository) RegisterCliente(ctx context.Context, a *account.Re
 
 	t := account.User{}
 	query := `select email,username from users where username = $1 or email = $2;`
-	err = conn.QueryRow(p.Context, query, a.Username, a.Email).Scan(&t.Email, &t.Username)
+	err = conn.QueryRow(p.Context, query, a.Nombre, a.Email).Scan(&t.Email, &t.Username)
 	log.Println(t)
 	if t.Email != nil {
 		if *t.Email == a.Email {
@@ -112,22 +112,22 @@ func (p *pgAccountRepository) RegisterCliente(ctx context.Context, a *account.Re
 		}
 	}
 	if t.Username != nil {
-		if *t.Username == *a.Username {
+		if *t.Username == a.Nombre {
 			return user.UserAuth{}, errors.New("yste nombre ya esta ocupado")
 		}
 	}
 	query2 := `insert into users (email,username,created_on,password) values ($1,$2,now(),crypt($3, gen_salt('bf')))
 	returning (user_id);`
 	var userId string
-	err = conn.QueryRow(p.Context, query2, a.Email, a.Username, a.Password).Scan(&userId)
+	err = conn.QueryRow(p.Context, query2, a.Email, a.Nombre, a.Password).Scan(&userId)
 	if err != nil {
 		return user.UserAuth{}, err
 	}
 	cliente := user.UserAuth{}
 	log.Println(reflect.TypeOf(a.EmpresaId))
-	query3 := `insert into clientes (nombre,email,empresa_id,created_on,user_id,rol,superior_id) values ($1,$2,$3,$4,$5,$6,$7)
+	query3 := `insert into clientes (nombre,apellido,email,empresa_id,created_on,user_id,rol,superior_id) values ($1,$2,$3,$4,$5,$6,$7,$8)
 	returning (client_id,email,estado,rol,empresa_id,(''));`
-	err = conn.QueryRow(p.Context, query3, a.Username, a.Email, a.EmpresaId, time.Now(), userId, a.Rol,a.SuperiorId).Scan(&cliente)
+	err = conn.QueryRow(p.Context, query3, a.Nombre,a.Apellido ,a.Email, a.EmpresaId, time.Now(), userId, a.Rol, a.SuperiorId).Scan(&cliente)
 	if err != nil {
 		return user.UserAuth{}, err
 	}
@@ -154,7 +154,7 @@ func (p *pgAccountRepository) RegisterFuncionario(ctx context.Context, a *accoun
 	var query string
 	t := account.User{}
 	query = `select email,username from users where username = $1 or email = $2;`
-	err = conn.QueryRow(p.Context, query, a.Username, a.Email).Scan(&t.Email, &t.Username)
+	err = conn.QueryRow(p.Context, query, a.Nombre, a.Email).Scan(&t.Email, &t.Username)
 	// log.Println(t)
 	if t.Email != nil {
 		if *t.Email == a.Email {
@@ -162,13 +162,13 @@ func (p *pgAccountRepository) RegisterFuncionario(ctx context.Context, a *accoun
 		}
 	}
 	if t.Username != nil {
-		if *t.Username == *a.Username {
+		if *t.Username == a.Nombre {
 			return user.UserAuth{}, model.ErrConflictUsername
 		}
 	}
 	query = `insert into users (email,username,created_on,password) values ($1,$2,$3,crypt($4, gen_salt('bf'))) returning (user_id);`
 	var userId string
-	err = conn.QueryRow(p.Context, query, a.Email, a.Username, time.Now(), a.Password).Scan(&userId)
+	err = conn.QueryRow(p.Context, query, a.Email, a.Nombre, time.Now(), a.Password).Scan(&userId)
 	if err != nil {
 		return
 	}
@@ -182,9 +182,9 @@ func (p *pgAccountRepository) RegisterFuncionario(ctx context.Context, a *accoun
 	// }
 	// log.Panicln("USER INSERTED")
 	res = user.UserAuth{}
-	query = `insert into funcionarios (nombre,email,empresa_id,created_on,user_id,rol,superior_id) values ($1,$2,$3,$4,$5,$6,$7)
+	query = `insert into funcionarios (nombre,apellido,email,empresa_id,created_on,user_id,rol,superior_id) values ($1,$2,$3,$4,$5,$6,$7,$8)
 	returning (funcionario_id,email,estado,rol,empresa_id,(''));`
-	err = conn.QueryRow(p.Context, query, a.Username, a.Email, a.EmpresaId, time.Now(), userId,a.Rol,a.SuperiorId).Scan(&res)
+	err = conn.QueryRow(p.Context, query, a.Nombre,a.Apellido, a.Email, a.EmpresaId, time.Now(), userId, a.Rol, a.SuperiorId).Scan(&res)
 	// log.Println(*t.Username)
 	if err != nil {
 		return

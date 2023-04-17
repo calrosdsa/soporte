@@ -19,7 +19,7 @@ create table if not exists areas (
     creador_id uuid NOT NULL
 );
 
-create table if not exists sub_areas (
+create table if not exists proyectos (
     id serial primary key,
     nombre VARCHAR  NOT NULL,
     parent_id int NOT NULL,
@@ -30,11 +30,18 @@ create table if not exists sub_areas (
     creador_id uuid NOT NULL
 );
 
+create table if not exists proyecto_duration (
+    id serial primary key,
+    proyecto_id int NOT NULL,
+    start_date TIMESTAMP NOT NULL,
+    end_date TIMESTAMP NOT NULL,
+);
+
 create table if not exists user_area (
     id serial primary key,
     user_id uuid NOT NULL,
     area_id int NOT NULL,
     estado int DEFAULT 0,
-    created_on TIMESTAMP NOT NULL,
+    created_on TIMESTAMP NOT NULL,  
     nombre_area VARCHAR NOT NULL
 );

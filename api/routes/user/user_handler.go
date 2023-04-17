@@ -30,6 +30,7 @@ func NewUserHandler(e *echo.Echo, us user.UserUseCases) {
 	handler := &UserHandler{
 		UserUcase: us,
 	}
+	
 	e.POST("user/update-cliente/", handler.UpdateCliente)
 	e.GET("user/cliente/:clienteId/", handler.GetClienteById)
 	e.GET("user/clientes/", handler.GetClientes)
@@ -46,8 +47,24 @@ func NewUserHandler(e *echo.Echo, us user.UserUseCases) {
 	e.GET("user/add-user-list/:areaId/", handler.GetUserFiltered)
 	e.GET("user/users-empresa/:emId/", handler.GetUsersbyEmpresaId)
 	e.GET("user/users-empresa-by-rol/:emId/:rol/", handler.GetUsersEmpresaByRol)
+
+	e.GET("user/", handler.GetProfile)
+
 }
 
+func (u *UserHandler) GetProfile(c echo.Context) (err error) {
+	token := c.Request().Header["Authorization"][0]
+	claims, err := r.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
+	ctx := c.Request().Context()
+	res, err := u.UserUcase.GetUserById(ctx, claims.UserId,claims.Rol)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ResponseError{Message: err.Error()})
+	}
+	return c.JSON(http.StatusOK, res)
+}
 
 
 func (u *UserHandler) GetUsersEmpresaByRol(c echo.Context) (err error) {

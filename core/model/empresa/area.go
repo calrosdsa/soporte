@@ -13,7 +13,7 @@ type Area struct {
 	CreadorId string    `json:"creador_id"`
 }
 
-type SubArea struct {
+type Proyecto struct {
 	Id       int    `json:"id"`
 	Nombre   string `json:"nombre"`
 	ParentId int    `json:"parent_id"`
@@ -24,6 +24,8 @@ type SubArea struct {
 	EmpresaParentId int       `json:"empresa_parent_id"`
 	CreatedOn       time.Time `json:"created_on"`
 	CreadorId       string    `json:"creador_id"`
+	Start           string    `json:"start"`
+	End             string    `json:"end"`
 }
 
 type AreaUser struct {
@@ -33,9 +35,9 @@ type AreaUser struct {
 }
 
 type UserArea struct {
-	UserId   string `json:"user_id"`
-	Estado   int    `json:"estado"`
-	Name     string `json:"nombre"`
+	UserId   string  `json:"user_id"`
+	Estado   int     `json:"estado"`
+	Name     string  `json:"nombre"`
 	Apellido *string `json:"apellido"`
 	Photo    *string `json:"profile_photo"`
 }

@@ -22,24 +22,28 @@ func NewEmpresaUseCase(uc empresa.EmpresaRepository, timeout time.Duration, util
 	}
 }
 
-func (uc *empresaUseCase) GetAreasEmpresa(ctx context.Context, emId int) (res []empresa.Area, err error) {
+func (uc *empresaUseCase) GetAreas(ctx context.Context, emId int,id string,rol int) (res []empresa.Area, err error) {
 	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
 	defer cancel()
-	res, err = uc.empresaRepo.GetAreasEmpresa(ctx, emId)
+	if uc.util.IsAdminFuncionario(rol){
+		res, err = uc.empresaRepo.GetAreasEmpresa(ctx, emId)
+	} else if uc.util.IsFuncionarioAdmin(rol){
+		res, err = uc.empresaRepo.GetAreasFuncionario(ctx,id)
+	}
+	return
+}
+	
+func (uc *empresaUseCase) GetProyectos(ctx context.Context, parentId int) (res []empresa.Area, err error) {
+	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
+	defer cancel()
+	res, err = uc.empresaRepo.GetProyectos(ctx, parentId)
 	return
 }
 
-func (uc *empresaUseCase) GetSubAreas(ctx context.Context, parentId int) (res []empresa.Area, err error) {
+func (uc *empresaUseCase) CreateProyecto(ctx context.Context, a *empresa.Proyecto) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
 	defer cancel()
-	res, err = uc.empresaRepo.GetSubAreas(ctx, parentId)
-	return
-}
-
-func (uc *empresaUseCase) CreateSubArea(ctx context.Context, a *empresa.SubArea) (err error) {
-	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
-	defer cancel()
-	err = uc.empresaRepo.CreateSubArea(ctx, a)
+	err = uc.empresaRepo.CreateProyecto(ctx, a)
 	return
 }
 
@@ -73,10 +77,17 @@ func (uc *empresaUseCase) GetAreasUser(ctx context.Context, userId string) (res 
 	return
 }
 
-func (uc *empresaUseCase) GetUsersAreaByAreaId(ctx context.Context, areaId int) (res []empresa.UserArea, err error) {
+func (uc *empresaUseCase) GetClientesByAreaId(ctx context.Context, areaId int) (res []empresa.UserArea, err error) {
 	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
 	defer cancel()
-	res, err = uc.empresaRepo.GetUsersAreaByAreaId(ctx, areaId)
+	res, err = uc.empresaRepo.GetClientesByAreaId(ctx, areaId)
+	return
+}
+
+func (uc *empresaUseCase) GetFuncionariosByAreaId(ctx context.Context, areaId int) (res []empresa.UserArea, err error) {
+	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
+	defer cancel()
+	res, err = uc.empresaRepo.GetFuncionariosByAreaId(ctx, areaId)
 	return
 }
 
@@ -87,7 +98,7 @@ func (uc *empresaUseCase) GetAreasFromUser(ctx context.Context, userId string, e
 		res, err = uc.empresaRepo.GetAreasClienteAdmin(ctx, userId)
 		return
 	} else if uc.util.IsFuncionarioRol(rol) {
-		res, err = uc.empresaRepo.GetSubAreasFuncionario(ctx, emId)
+		res, err = uc.empresaRepo.GetProyectosFuncionario(ctx, userId)
 		return
 	}
 	return res, model.ErrConflict

@@ -22,6 +22,24 @@ type Funcionario struct {
 	Rol          int        `json:"rol"`
 }
 
+type UserDetail struct {
+	Id string  `json:"id,omitempty"`
+	Nombre *string  `json:"nombre,omitempty"`   
+	Apellido *string `json:"apellido,omitempty"`   
+	Email string  `json:"email,omitempty"`   
+	Telefono *string `json:"telefono,omitempty"`
+	Celular *string  `json:"celular,omitempty"`
+	UserId *string  `json:"user_id,omitempty"`
+	SuperiorId *string  `json:"superior_id,omitempty"`
+	ProfilePhoto *string  `json:"profile_photo,omitempty"`
+	Estado int  `json:"estado,omitempty"`
+	EmpresaId int `json:"empresa_id,omitempty"`
+	// IsAdmin int  `json:"is_admin,omitempty"`
+	CreatedOn time.Time `json:"created_on,omitempty"`
+	UpdatedOn *time.Time `json:"updated_on,omitempty"`
+	Rol          int        `json:"rol"`
+}
+
 
 type FuncionarioResponse struct{
 	FuncionarioId string  `json:"funcionario_id,omitempty"`

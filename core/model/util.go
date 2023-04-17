@@ -1,21 +1,46 @@
 package model
 
 type Role int
+type Estado byte
+type CasoEstado byte
+type FileType byte
+type Order byte
+
+const (
+	DESC  Order = 1
+	ASC = 2
+)
+
+const (
+	Pendiente CasoEstado = iota
+	EnEsperaDelFuncionario
+	EnEsperaDelCliente 
+	Resuelto
+	NoResuelto	
+)
 
 const (
 	RoleCliente Role = iota
 	RoleFuncionario
 	RoleClienteAdmin
 	RoleFuncionarioAdmin
+	RoleAdmin
 )
 
-type Estado byte
 
 const (
 	Activo Estado = iota
 	Inactivo
 	Eliminado
 )
+
+const (
+	XLSX FileType = iota
+	PDF
+	HTML
+)
+
+
 
 type Util interface {
 	//devuelve true si el  rol es de cliente  cliente = 0
@@ -36,5 +61,7 @@ type Util interface {
 	IsUserRol(rol int) bool
 	//devuele page count and offset
 	PaginationValues(p int,of int)(page int,offset int)
+	//is admin rol 5
+	IsAdminFuncionario(rol int) bool
 }
 

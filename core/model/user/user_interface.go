@@ -18,7 +18,7 @@ type UserUseCases interface {
 	GetClientesByArea(context.Context, int) ([]UserArea, error)
 	UpdateCliente(ctx context.Context, columns []string, values ...interface{}) error
 	UpdateFuncionario(ctx context.Context, columns []string, values ...interface{}) error
-	GetUserById(ctx context.Context, id string, rol int) (Cliente, error)
+	GetUserById(ctx context.Context, id string, rol int) (UserDetail, error)
 	GetClientes(ctx context.Context, id string, rol int) ([]UserShortInfo, error)
 	GetFuncionarios(ctx context.Context) ([]Funcionario, error)
 	GetFuncionarioById(ctx context.Context, id string) (Funcionario, error)
@@ -39,10 +39,13 @@ type UserUseCases interface {
 }
 
 type UserRepository interface {
+	GetClienteDetail(ctx context.Context, id string) (res UserDetail, err error)
+	GetFuncionarioDetail(ctx context.Context, id string) (res UserDetail, err error)
+
+
 	GetUsersShortIInfoC(ctx context.Context, id string) ([]UserShortInfo, error)
 	GetUsersShortIInfoF(ctx context.Context, emID int) ([]UserShortInfo, error)
 
-	// GetUsersShortIInfo(ctx context.Context, id string, rol int) ([]UserShortInfo, error)
 	GetInvitaciones(ctx context.Context, id string) ([]UserShortInfo, error)
 
 	CreateUserInvitationF(ctx context.Context, us *UserShortInfo) (UserShortInfo, error)
@@ -50,12 +53,11 @@ type UserRepository interface {
 
 	
 	GetClientesEmpresaByRol(ctx context.Context, emId int, rol int) ([]UserShortInfo, error)
-	// CreateCliente(ctx context.Context,user *Cliente ) (res string,err error)
 	GetUserAddList(ctx context.Context, f int, rol int, sId string) ([]UserArea, error)
 	GetClientesByArea(context.Context, int) ([]UserArea, error)
 	UpdateCliente(ctx context.Context, columns []string, values ...interface{}) error
 	UpdateFuncionario(ctx context.Context, columns []string, values ...interface{}) error
-	GetUserById(ctx context.Context, id string, rol int) (res Cliente, err error)
+	
 	GetClientes(ctx context.Context) (clientes []Cliente, err error)
 	GetFuncionarios(ctx context.Context) (funcionarios []Funcionario, err error)
 	GetFuncionarioById(ctx context.Context, id string) (res Funcionario, err error)

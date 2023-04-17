@@ -186,31 +186,19 @@ func (p *pgUserRepository) GetUserAddList(ctx context.Context, f int,rol int,sId
 		query = `select client_id,nombre,estado from clientes where superior_id = $1 ;`
 		res, _ = p.fetchUserArea(ctx, query,sId)
 	} else if rol == int(model.RoleFuncionarioAdmin){
-		query = `select funcionario_id,nombre,estado from funcionarios where superior_id = $1 ;`
-		res, _ = p.fetchUserArea(ctx, query,sId)
+		query = `select funcionario_id,nombre,estado from funcionarios;`
+		res, _ = p.fetchUserArea(ctx, query)
 	}
 	if len(res2) == 0 {
 		return res, nil
 	} else {
 		users:= res
-		// log.Println(users == res)
 		for i := len(res) -1;i>= 0;i-- {
-			// log.Println("Clientes",i,val.Nombre)
 		for _, val2 := range res2 {
-			// log.Println(val2.Nombre,val.Nombre)
-			    // log.Println(val.Id,val2.Id)
 				if val2.Id == res[i].Id {
-					// log.Println("Existe",val.Nombre)
-		// 			users = append(users, val)
-		            // res[i] = res[len(res)-1]
-					// res = append(res[:i], res[i+1:]...)
 					users[i] = users[len(users)-1] // Copy last element to index i.
 					users[len(users)-1] = user.UserArea{}   // Erase last element (write zero value).
 					users = users[:len(users)-1]   // Truncate slice.
-					// copy(users[i:], users[i+1:]) // Shift users[i+1:] left one index.
-					// users[len(users)-1] = user.UserArea{}     // Erase last element (write zero value).
-					// users = users[:len(users)-1]     // Truncate slice.
-					// log.Println("No Existe",val.Nombre)
 				}
 			}
 
@@ -262,35 +250,37 @@ func (p *pgUserRepository) GetFuncionarios(ctx context.Context) (funcionarios []
 	return list, err
 }
 
-func (p *pgUserRepository) GetUserById(ctx context.Context, id string,rol int) (res user.Cliente, err error) {
-	if rol == int(model.RoleClienteAdmin){
-
-		query := `select * from clientes where client_id = $1;`
+func (p *pgUserRepository) GetClienteDetail(ctx context.Context, id string) (res user.UserDetail, err error) {
+		query := `select client_id,nombre,apellido,celular,email,superior_id,empresa_id,telefono,created_on,
+		updated_on,user_id,estado,profile_photo,rol
+		 from clientes where client_id = $1 limit 1;`
 		log.Println(id)
-		list, err := p.fetchClientes(ctx, query, id)
+		list, err := p.fetchUserDetail(ctx, query, id)
 		if err != nil {
-			return user.Cliente{}, err
+			return 
 		}
 		if len(list) > 0 {
 			res = list[0]
 		} else {
 			return res, model.ErrNotFound
 		}
-	}else if rol == int(model.RoleFuncionarioAdmin){
-		query := `select * from funcionarios where funcionario_id = $1;`
-		// log.Println(id)
-		list, err := p.fetchClientes(ctx, query, id)
-		if err != nil {
-			return user.Cliente{}, err
-		}
-		if len(list) > 0 {
-			res = list[0]
-		} else {
-			return res, model.ErrNotFound
-		}
-	}
-
 	return
+}
+
+func (p *pgUserRepository) GetFuncionarioDetail(ctx context.Context, id string) (res user.UserDetail, err error) {
+	query := `select funcionario_id,nombre,apellido,celular,email,superior_id,empresa_id,telefono,created_on,
+	updated_on,user_id,estado,profile_photo,rol from funcionarios where funcionario_id = $1 limit 1;`
+	// log.Println(id)
+	list, err := p.fetchUserDetail(ctx, query, id)
+	if err != nil {
+		return
+	}
+	if len(list) > 0 {
+		res = list[0]
+	} else {
+		return 
+	}
+return
 }
 
 func (p *pgUserRepository) GetFuncionarioById(ctx context.Context, id string) (res user.Funcionario, err error) {
@@ -306,6 +296,44 @@ func (p *pgUserRepository) GetFuncionarioById(ctx context.Context, id string) (r
 	}
 	return
 }
+
+func (p *pgUserRepository) fetchUserDetail(ctx context.Context, query string, args ...interface{}) (result []user.UserDetail, err error) {
+	rows, err := p.Conn.Query(p.Context, query, args...)
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+	defer func() {
+		rows.Close()
+	}()
+	result = make([]user.UserDetail, 0)
+	for rows.Next() {
+		t := user.UserDetail{}
+		err = rows.Scan(
+			&t.Id,
+			&t.Nombre,
+			&t.Apellido,
+			&t.Celular,
+			&t.Email,
+			&t.SuperiorId,
+			&t.EmpresaId,
+			&t.Telefono,
+			&t.CreatedOn,
+			&t.UpdatedOn,
+			&t.UserId,
+			&t.Estado,
+			&t.ProfilePhoto,
+			&t.Rol,
+		)
+		result = append(result, t)
+		if err != nil {
+			logrus.Error(err)
+			return nil, err
+		}
+	}
+	return result, nil
+}
+
 func (p *pgUserRepository) fetchFuncionarios(ctx context.Context, query string, args ...interface{}) (result []user.Funcionario, err error) {
 	rows, err := p.Conn.Query(p.Context, query, args...)
 	if err != nil {

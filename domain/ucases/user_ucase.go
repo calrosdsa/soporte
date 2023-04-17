@@ -91,6 +91,7 @@ func (a *userUseCase) sendEmail(emails []string, url string) {
 			URL: url,
 		})
 		m := gomail.NewMessage()
+	
 		m.SetHeader("From", "jmiranda@teclu.com")
 		m.SetHeader("To", emails...)
 		// m.SetAddressHeader("Cc", "dan@example.com", "Dan")
@@ -100,7 +101,7 @@ func (a *userUseCase) sendEmail(emails []string, url string) {
 
 		// d := gomail.NewDialer("mail.teclu.com", 25, "jmiranda@teclu.com", "jmiranda2022")
 		if err := a.gomailAuth.DialAndSend(m); err != nil {
-			log.Println(err)
+			log.Println("Error sending email",err)
 		}
 
 		// // headers := "MIME-version: 1.0;\nContent-Type: text/html;"
@@ -249,14 +250,21 @@ func (u *userUseCase) UpdateFuncionario(ctx context.Context, columns []string, v
 	return nil
 }
 
-func (u *userUseCase) GetUserById(ctx context.Context, id string, rol int) (res user.Cliente, err error) {
+func (u *userUseCase) GetUserById(ctx context.Context, id string, rol int) (res user.UserDetail, err error) {
 	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
-	res, err = u.userRepo.GetUserById(ctx, id, rol)
-	if err != nil {
-		return
+	if u.util.IsClienteRol(rol){
+		res, err = u.userRepo.GetClienteDetail(ctx, id)
+		if err != nil {
+			return
+		}
+	}else if u.util.IsFuncionarioRol(rol){
+		res, err = u.userRepo.GetFuncionarioDetail(ctx, id)
+		if err != nil {
+			return
+		}
 	}
-	return res, err
+	return 
 }
 
 func (u *userUseCase) GetFuncionarioById(ctx context.Context, id string) (res user.Funcionario, err error) {
