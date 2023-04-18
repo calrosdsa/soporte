@@ -30,7 +30,6 @@ CREATE TABLE if not exists casos  (
     funcionario_id uuid,
     superior_id uuid,
     status INT DEFAULT 0,
-    -- rol user creador
     rol INT,
     PRIMARY KEY (id)
 );
@@ -70,10 +69,8 @@ create table if not exists messages (
 
 
 insert into empresas (id,slug,nombre,telefono,created_on) values (6,'teclu','Teclu','75390560',now());
-insert into users (user_id,email,username,password,created_on) values (
-    '8ba62445-3c62-45ad-aab5-e15bc5d68323','jorgemiranda0180@gmail.com','Jorge',crypt('12ab34cd56ef',gen_salt('bf')),now());
-insert into funcionarios(email,nombre,rol,empresa_id,user_id,superior_id,created_on) values('jorgemiranda0180@gmail.com','Jorge',
-3,6,'8ba62445-3c62-45ad-aab5-e15bc5d68323','8ba62445-3c62-45ad-aab5-e15bc5d68323',now());
+insert into users (user_id,email,username,password,created_on) values ('8ba62445-3c62-45ad-aab5-e15bc5d68323','jorgemiranda0180@gmail.com','Jorge',crypt('12ab34cd56ef',gen_salt('bf')),now());
+insert into funcionarios(email,nombre,apellido,rol,empresa_id,user_id,superior_id,created_on) values('jorgemiranda0180@gmail.com','Jorge','Miranda',3,6,'8ba62445-3c62-45ad-aab5-e15bc5d68323','8ba62445-3c62-45ad-aab5-e15bc5d68323',now());
 
 -- select nombre,apellido,titulo from clientes inner join casos on clientes.client_id = casos.client_id;
 

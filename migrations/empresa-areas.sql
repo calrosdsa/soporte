@@ -34,7 +34,7 @@ create table if not exists proyecto_duration (
     id serial primary key,
     proyecto_id int NOT NULL,
     start_date TIMESTAMP NOT NULL,
-    end_date TIMESTAMP NOT NULL,
+    end_date TIMESTAMP NOT NULL
 );
 
 create table if not exists user_area (

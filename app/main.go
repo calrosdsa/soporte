@@ -20,7 +20,7 @@ import (
 )
 
 func init() {
-	viper.SetConfigFile(`/home/rootuser/soporte-go/app/.env`)
+	viper.SetConfigFile(`/home/rootuser/soporte/app/.env`)
 	// viper.SetConfigFile(`.env`)
 	err := viper.ReadInConfig()
 	if err != nil {
