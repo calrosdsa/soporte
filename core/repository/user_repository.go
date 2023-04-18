@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	// "databasx.Conn"
@@ -11,18 +12,17 @@ import (
 	user "soporte-go/core/model/user"
 	"soporte-go/util"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
 
 	_ "github.com/lib/pq"
 )
 
 type pgUserRepository struct {
-	Conn    *pgxpool.Pool
+	Conn    *sql.DB
 	Context context.Context
 }
 
-func NewPgUserRepository(conn *pgxpool.Pool, ctx context.Context) user.UserRepository {
+func NewPgUserRepository(conn *sql.DB, ctx context.Context) user.UserRepository {
 	return &pgUserRepository{
 		Conn:    conn,
 		Context: ctx,
@@ -58,19 +58,19 @@ func (p *pgUserRepository) SearchUser(ctx context.Context, id string, q string) 
 func (p *pgUserRepository) DeleteInvitation(ctx context.Context, m string) (err error) {
 	log.Println(m)
 	query := `delete from invitaciones where email = $1;`
-	_, err = p.Conn.Exec(ctx, query, m)
+	_, err = p.Conn.ExecContext(ctx, query, m)
 	return
 }
 
 func (p *pgUserRepository) ValidateEmail(ctx context.Context, m string) (err error) {
 	var email string
 	query := `select email from users where email = $1;`
-	p.Conn.QueryRow(ctx, query, m).Scan(&email);
+	p.Conn.QueryRowContext(ctx, query, m).Scan(&email);
 	if email == m {
 		return fmt.Errorf("ya existe un usuario con este email: %s", email)
 	}
 	query1 := `select email from invitaciones where email = $1;`
-	p.Conn.QueryRow(ctx, query1, m).Scan(&email);
+	p.Conn.QueryRowContext(ctx, query1, m).Scan(&email);
 
 	if email == m {
 		return fmt.Errorf("ya existe una invitacion con este email: %s", email)
@@ -82,7 +82,7 @@ func (p *pgUserRepository) CreateUserInvitationC(ctx context.Context, us *user.U
 	// var superiorId *string
 	// query := `select superior_id from clientes where client_id = $1`
 	// log.Println(us.Id)
-	// p.Conn.QueryRow(ctx, query, us.Id).Scan(&superiorId)
+	// p.Conn.QueryRowContext(ctx, query, us.Id).Scan(&superiorId)
 	// if err != nil {
 	// 	log.Println("error here1")
 	// 	return user.UserShortInfo{}, err
@@ -90,7 +90,7 @@ func (p *pgUserRepository) CreateUserInvitationC(ctx context.Context, us *user.U
 	query2 := `insert into invitaciones (email,is_admin,creador_id,send_on) values($1,$2,$3,$4)
 	 returning id,email,pendiente,is_admin,send_on;`
 	t := user.UserShortInfo{}
-	err = p.Conn.QueryRow(ctx, query2, us.Nombre, us.IsAdmin, us.Id,time.Now()).Scan(
+	err = p.Conn.QueryRowContext(ctx, query2, us.Nombre, us.IsAdmin, us.Id,time.Now()).Scan(
 		&t.Id,&t.Nombre,&t.Pendiente,&t.IsAdmin,&t.DateTime)
 	if err != nil {
 		log.Println("error is here",err)
@@ -102,14 +102,14 @@ func (p *pgUserRepository) CreateUserInvitationC(ctx context.Context, us *user.U
 func (p *pgUserRepository) CreateUserInvitationF(ctx context.Context, us *user.UserShortInfo) (res user.UserShortInfo, err error) {
 	// var superiorId string
 	// query := `select superior_id from funcionarios where funcionario_id = $1`
-	// err = p.Conn.QueryRow(ctx, query, us.Id).Scan(&superiorId)
+	// err = p.Conn.QueryRowContext(ctx, query, us.Id).Scan(&superiorId)
 	// if err != nil {
 	// 	return user.UserShortInfo{}, err
 	// }
 	query2 := `insert into invitaciones (email,is_admin,creador_id,send_on) values($1,$2,$3,$4)
 	 returning id,email,pendiente,is_admin,send_on;;`
 	t := user.UserShortInfo{}
-	err = p.Conn.QueryRow(ctx, query2, us.Nombre, us.IsAdmin, us.Id,time.Now()).Scan(
+	err = p.Conn.QueryRowContext(ctx, query2, us.Nombre, us.IsAdmin, us.Id,time.Now()).Scan(
 		&t.Id,&t.Nombre,&t.Pendiente,&t.IsAdmin,&t.DateTime)
 	if err != nil {
 		log.Println("error is here",err)
@@ -219,9 +219,10 @@ func (p *pgUserRepository) GetClientes(ctx context.Context) (clietes []user.Clie
 
 func (p *pgUserRepository) UpdateCliente(ctx context.Context, columns []string, values ...interface{}) error {
 	query, _ := util.AppendQueries(`client_id`, `update clientes set `, columns)
+	
 	log.Println(query)
 	log.Println(values...)
-	_, err := p.Conn.Exec(p.Context, query, values...)
+	_, err := p.Conn.ExecContext(p.Context, query, values...)
 	if err != nil {
 		return err
 	}
@@ -233,7 +234,7 @@ func (p *pgUserRepository) UpdateCliente(ctx context.Context, columns []string, 
 func (p *pgUserRepository) UpdateFuncionario(ctx context.Context, columns []string, values ...interface{}) error {
 	query, _ := util.AppendQueries(`funcionario_id`, `update funcionarios set `, columns)
 	log.Println(query)
-	_, err := p.Conn.Exec(p.Context, query, values...)
+	_, err := p.Conn.ExecContext(p.Context, query, values...)
 	if err != nil {
 		return err
 	}
@@ -298,7 +299,7 @@ func (p *pgUserRepository) GetFuncionarioById(ctx context.Context, id string) (r
 }
 
 func (p *pgUserRepository) fetchUserDetail(ctx context.Context, query string, args ...interface{}) (result []user.UserDetail, err error) {
-	rows, err := p.Conn.Query(p.Context, query, args...)
+	rows, err := p.Conn.QueryContext(p.Context, query, args...)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -335,7 +336,7 @@ func (p *pgUserRepository) fetchUserDetail(ctx context.Context, query string, ar
 }
 
 func (p *pgUserRepository) fetchFuncionarios(ctx context.Context, query string, args ...interface{}) (result []user.Funcionario, err error) {
-	rows, err := p.Conn.Query(p.Context, query, args...)
+	rows, err := p.Conn.QueryContext(p.Context, query, args...)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -373,7 +374,7 @@ func (p *pgUserRepository) fetchFuncionarios(ctx context.Context, query string, 
 }
 
 func (p *pgUserRepository) fetchClientes(ctx context.Context, query string, args ...interface{}) (result []user.Cliente, err error) {
-	rows, err := p.Conn.Query(p.Context, query, args...)
+	rows, err := p.Conn.QueryContext(p.Context, query, args...)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -412,7 +413,7 @@ func (p *pgUserRepository) fetchClientes(ctx context.Context, query string, args
 }
 
 func (p *pgUserRepository) fetchUserShortInfo(ctx context.Context, query string, args ...interface{}) (result []user.UserShortInfo, err error) {
-	rows, err := p.Conn.Query(p.Context, query, args...)
+	rows, err := p.Conn.QueryContext(p.Context, query, args...)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -445,7 +446,7 @@ func (p *pgUserRepository) fetchUserShortInfo(ctx context.Context, query string,
 
 
 func (p *pgUserRepository) fetchUsersForList(ctx context.Context, query string, args ...interface{}) (result []user.UserForList, err error) {
-	rows, err := p.Conn.Query(p.Context, query, args...)
+	rows, err := p.Conn.QueryContext(p.Context, query, args...)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -472,7 +473,7 @@ func (p *pgUserRepository) fetchUsersForList(ctx context.Context, query string, 
 }
 
 func (p *pgUserRepository) fetchUserArea(ctx context.Context, query string, args ...interface{}) (result []user.UserArea, err error) {
-	rows, err := p.Conn.Query(p.Context, query, args...)
+	rows, err := p.Conn.QueryContext(p.Context, query, args...)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err

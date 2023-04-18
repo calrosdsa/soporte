@@ -241,7 +241,7 @@ func (u *userUseCase) UpdateCliente(ctx context.Context, columns []string, value
 func (u *userUseCase) UpdateFuncionario(ctx context.Context, columns []string, values ...interface{}) error {
 	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
-	err := u.userRepo.UpdateCliente(ctx, columns, values...)
+	err := u.userRepo.UpdateFuncionario(ctx, columns, values...)
 	if err != nil {
 		log.Println(err)
 		return err

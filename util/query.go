@@ -12,7 +12,7 @@ func AppendQueries(condition,q string,columns []string) (string, error){
 	for i := 0; i < len(columns	);i++{
 			qParts = append(qParts,columns[i] + ` = $` + strconv.Itoa(i+1))
 	}
-	q += strings.Join(qParts, ",") + ` WHERE ` + condition +`= $` + strconv.Itoa(len(columns) +1) + `;`
+	q += strings.Join(qParts, ",") + ` WHERE ` + condition +`= $` + strconv.Itoa(len(columns) +1)
      return q,nil
 }
 

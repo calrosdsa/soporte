@@ -34,7 +34,7 @@ func NewUserHandler(e *echo.Echo, us user.UserUseCases) {
 	e.POST("user/update-cliente/", handler.UpdateCliente)
 	e.GET("user/cliente/:clienteId/", handler.GetClienteById)
 	e.GET("user/clientes/", handler.GetClientes)
-	e.POST("user/update-funcionario/:funcionarioId/", handler.UpdateCliente)
+	e.POST("user/update-funcionario/", handler.UpdateFuncionario)
 	e.GET("user/funcionario/:funcionarioId/", handler.GetClienteById)
 	e.GET("user/funcionarios/", handler.GetClientes)
 	e.GET("user/clientes-area/:areaId/", handler.GetClientesByArea)
@@ -281,7 +281,7 @@ func (u *UserHandler) GetFuncionarioById(c echo.Context) (err error) {
 
 func (u *UserHandler) UpdateFuncionario(c echo.Context) (err error) {
 	// var cliente user.Cliente
-	id := c.Param("funcionarioId")
+	id := c.QueryParam("id")
 	var json map[string]interface{} = map[string]interface{}{}
 	err = c.Bind(&json)
 	if err != nil {
@@ -340,7 +340,7 @@ func (u *UserHandler) GetClienteById(c echo.Context) (err error) {
 
 func (u *UserHandler) UpdateCliente(c echo.Context) (err error) {
 	// var cliente user.Cliente
-	clientId := c.QueryParam("userId")
+	clientId := c.QueryParam("id")
 	token := c.Request().Header["Authorization"][0]
 	_, err = r.ExtractClaims(token)
 	if err != nil {
@@ -362,6 +362,7 @@ func (u *UserHandler) UpdateCliente(c echo.Context) (err error) {
 		log.Println(v)
 		log.Println(k)
 	}
+	log.Println(clientId)
 	values = append(values, clientId)
 	// log.Println(fmt.Sprintf("%v", json))
 

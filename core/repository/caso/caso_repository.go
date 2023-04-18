@@ -80,26 +80,26 @@ func (p *pgCasoRepository) GetCasosFunForReporte(ctx context.Context,options *ca
 }
 
 func (p *pgCasoRepository) FinalizarCaso(ctx context.Context,fD *caso.FinalizacionDetail) (err error) {
-	// log.Println(id)
-	query := `update casos set detalles_de_finalizacion = $1, estado = $2,fecha_fin = $3 where id = $4`
-	_,err = p.Conn.ExecContext(ctx,query,fD.Detail,fD.Estado,time.Now(),fD.Id)
+	log.Println(fD.Detail)
+	query := `update casos set detalles_de_finalizacion = $1, estado = $2,fecha_fin = $3,updated_on = $4 where id = $5`
+	_,err = p.Conn.ExecContext(ctx,query,fD.Detail,fD.Estado,time.Now(),time.Now(),fD.Id)
 	return
 }
 
 func (p *pgCasoRepository) AsignarFuncionario(ctx context.Context, id string, idF string) (err error) {
 	var query string
 	var fechaInicio *string
-	query = `update casos set funcionario_id = $1,fecha_inicio = $2 where id = $3 returning (fecha_inicio)`
-	err = p.Conn.QueryRowContext(ctx, query, idF, time.Now(),id).Scan(&fechaInicio)
+	query = `update casos set funcionario_id = $1,fecha_inicio = $2,updated_on = $3 where id = $4 returning (fecha_inicio)`
+	err = p.Conn.QueryRowContext(ctx, query, idF, time.Now(),time.Now(),id).Scan(&fechaInicio)
 	log.Println(fechaInicio)
 	if err != nil {
 		return
 	}
-	if fechaInicio == nil {
-		query = `update casos set fecha_inicio = $1 where id = $2`
-		_, err = p.Conn.ExecContext(ctx, query, time.Now(), id)
+	// if fechaInicio == nil {
+	// 	query = `update casos set fecha_inicio = $1 where id = $2`
+	// 	_, err = p.Conn.ExecContext(ctx, query, time.Now(), id)
 
-	}
+	// }
 	// query = `update casos set fecha_iniciap`
 	return err
 }
@@ -107,10 +107,13 @@ func (p *pgCasoRepository) AsignarFuncionario(ctx context.Context, id string, id
 
 
 func (p *pgCasoRepository) GetCasoCliente(ctx context.Context, id string) (res caso.Caso, err error) {
-	query := `select clientes.nombre,clientes.apellido,funcionarios.nombre,funcionarios.apellido,titulo,id,descripcion,detalles_de_finalizacion,empresa,area,casos.created_on,
-	casos.updated_on,fecha_inicio,fecha_fin,prioridad,casos.estado,casos.client_id,casos.funcionario_id,casos.superior_id,casos.rol
-	from casos inner join clientes on clientes.client_id = casos.client_id left join funcionarios on funcionarios.funcionario_id = casos.funcionario_id
-	where id = $1 limit 1;`
+	query := `select clientes.nombre,clientes.apellido,funcionarios.nombre,funcionarios.apellido,titulo,casos.id,descripcion,detalles_de_finalizacion,empresa,area,casos.created_on,
+	casos.updated_on,fecha_inicio,fecha_fin,prioridad,casos.estado,casos.client_id,casos.funcionario_id,casos.superior_id,
+	casos.rol,p.nombre
+	from casos inner join clientes on clientes.client_id = casos.client_id 
+	left join funcionarios on funcionarios.funcionario_id = casos.funcionario_id
+	left join proyectos as p on casos.area = p.id
+	where casos.id = $1 limit 1;`
 	// var casoDetail caso.Caso
 	list , err := p.fetchCasosDetail(ctx, query, id)
 	if err != nil {
@@ -124,11 +127,12 @@ func (p *pgCasoRepository) GetCasoFuncionario(ctx context.Context, id string) (r
 	query := `select 
 	uc.nombre,uc.apellido,
 	uf.nombre,uf.apellido,
-	titulo,id,descripcion,detalles_de_finalizacion,empresa,area,c.created_on,
-	c.updated_on,fecha_inicio,fecha_fin,prioridad,c.estado,c.client_id,c.funcionario_id,c.superior_id,c.rol
+	titulo,c.id,descripcion,detalles_de_finalizacion,empresa,area,c.created_on,
+	c.updated_on,fecha_inicio,fecha_fin,prioridad,c.estado,c.client_id,c.funcionario_id,c.superior_id,c.rol,p.nombre
 	from casos as c left join funcionarios as uc on uc.funcionario_id = c.client_id 
+	left join proyectos as p on c.area = p.id
 	left join funcionarios as uf on uf.funcionario_id = c.funcionario_id
-	where id = $1 limit 1;`
+	where c.id = $1 limit 1`
 	// var casoDetail caso.Caso
 	list , err := p.fetchCasosDetail(ctx, query, id)
 	if err != nil {
@@ -360,6 +364,7 @@ func (p *pgCasoRepository) fetchCasosDetail(ctx context.Context, query string, a
 			&t.FuncionarioId,
 			&t.SuperiorId,
 			&t.Rol,
+			&t.ProyectoName,
 		)
 		result = append(result, t)
 		if err != nil {

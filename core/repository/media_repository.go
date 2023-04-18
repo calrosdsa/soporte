@@ -2,20 +2,20 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"soporte-go/core/model/media"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
 )
 
 type mediaRepository struct {
-	Conn *pgxpool.Pool
+	Conn *sql.DB
 	Context context.Context
 }
 
 
-func NewMediaRepository(conn *pgxpool.Pool,ctx context.Context) media.MediaRepository {
+func NewMediaRepository(conn *sql.DB,ctx context.Context) media.MediaRepository {
 	return &mediaRepository{
 		Conn: conn,
 		Context: ctx,
@@ -26,7 +26,7 @@ func (p *mediaRepository) UploadFileCaso(ctx context.Context,url string,id strin
 	query := `insert into recursos (file_url,ext,descripcion,caso_id,created_on) values ($1,$2,$3,$4,$5)
 	returning (id,file_url,ext,descripcion,caso_id,created_on);`
 	t := media.CasoFile{}
-	err =  p.Conn.QueryRow(ctx,query,url,ext,descripcion,id,time.Now()).Scan(&t)
+	err =  p.Conn.QueryRowContext(ctx,query,url,ext,descripcion,id,time.Now()).Scan(&t)
 	if err != nil{
 		return
 	}
@@ -40,7 +40,7 @@ func (p *mediaRepository) GetFileCasos(ctx context.Context,id string)(res []medi
 }
 
 func (p *mediaRepository) fetchFileCasos(ctx context.Context,query string,args ...interface{})(result []media.CasoFile,err error){
-	rows, err := p.Conn.Query(p.Context, query, args...)
+	rows, err := p.Conn.QueryContext(p.Context, query, args...)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
