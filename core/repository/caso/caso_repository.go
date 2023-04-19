@@ -42,14 +42,14 @@ func (p *pgCasoRepository) GetCasosCliForReporte(ctx context.Context,options *ca
 	if len(options.Estados) == 3{
 		// log.Println("ALL estaods")
 		query = `select clientes.nombre,clientes.apellido,funcionarios.nombre,funcionarios.apellido,titulo,id,descripcion,detalles_de_finalizacion,empresa,area,casos.created_on,
-		casos.updated_on,fecha_inicio,fecha_fin,prioridad,casos.estado,casos.client_id,casos.funcionario_id,casos.superior_id,casos.rol
+		casos.updated_on,fecha_inicio,fecha_fin,prioridad,casos.estado,casos.client_id,casos.funcionario_id,casos.superior_id,casos.rol,('')
 		from casos inner join clientes on clientes.client_id = casos.client_id left join funcionarios
 		 on funcionarios.funcionario_id = casos.funcionario_id
 		 where casos.created_on between $1 and $2 and casos.area = any($3);`
 		res,err = p.fetchCasosDetail(ctx,query,options.StartDate,options.EndDate,pq.Array(options.Areas))
 	}else{
 		query = `select clientes.nombre,clientes.apellido,funcionarios.nombre,funcionarios.apellido,titulo,id,descripcion,detalles_de_finalizacion,empresa,area,casos.created_on,
-		casos.updated_on,fecha_inicio,fecha_fin,prioridad,casos.estado,casos.client_id,casos.funcionario_id,casos.superior_id,casos.rol
+		casos.updated_on,fecha_inicio,fecha_fin,prioridad,casos.estado,casos.client_id,casos.funcionario_id,casos.superior_id,casos.rol,('')
 		from casos inner join clientes on clientes.client_id = casos.client_id left join funcionarios 
 		on funcionarios.funcionario_id = casos.funcionario_id
 		 where casos.created_on between $1 and $2 and casos.estado = any($3) and casos.area = any($4);`
@@ -63,14 +63,14 @@ func (p *pgCasoRepository) GetCasosFunForReporte(ctx context.Context,options *ca
 	if len(options.Estados) == 3{
 		// log.Println("ALL estaods")
 		query = `select uc.nombre,uc.apellido,uf.nombre,uf.apellido,titulo,id,descripcion,detalles_de_finalizacion,empresa,area,c.created_on,
-		c.updated_on,fecha_inicio,fecha_fin,prioridad,c.estado,c.funcionario_id,c.funcionario_id,c.superior_id,c.rol
+		c.updated_on,fecha_inicio,fecha_fin,prioridad,c.estado,c.funcionario_id,c.funcionario_id,c.superior_id,c.rol,('')
 		from casos as c inner join funcionarios as uc on uc.funcionario_id = c.client_id 
 		left join funcionarios as uf on uf.funcionario_id = c.funcionario_id
 		 where c.created_on between $1 and $2 and c.area = any($3);`
 		res,err = p.fetchCasosDetail(ctx,query,options.StartDate,options.EndDate,pq.Array(options.Areas))
 	}else{
 		query = `select uc.nombre,uc.apellido,uf.nombre,uf.apellido,titulo,id,descripcion,detalles_de_finalizacion,empresa,area,c.created_on,
-		c.updated_on,fecha_inicio,fecha_fin,prioridad,c.estado,c.funcionario_id,c.funcionario_id,c.superior_id,c.rol
+		c.updated_on,fecha_inicio,fecha_fin,prioridad,c.estado,c.funcionario_id,c.funcionario_id,c.superior_id,c.rol,('')
 		from casos as c inner join funcionarios as uc on uc.funcionario_id = c.client_id 
 		left join funcionarios as uf on uf.funcionario_id = c.funcionario_id
 		 where c.created_on between $1 and $2 and c.area = any($3) and c.area = any($4);`
