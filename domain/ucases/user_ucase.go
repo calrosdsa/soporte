@@ -126,7 +126,7 @@ func (a *userUseCase) UserRegisterInvitation(ctx context.Context, to *user.UserR
 	defer cancel()
 	invitations := make([]user.UserShortInfo, len(to.To))
 	for index, value := range to.To {
-		tokenInvitation, _ := jwt.GenerateInvitationJWT(id, rol, to.EmpresaId, value)
+		tokenInvitation, _ := jwt.GenerateInvitationJWT(id, rol, empresaId, value)
 		url := fmt.Sprintf("http://localhost:3000/auth/registro?auth=%s", tokenInvitation)
 		t := user.UserShortInfo{
 			Nombre:  value,
