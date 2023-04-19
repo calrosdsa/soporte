@@ -81,7 +81,7 @@ func (p *wsRepository) fetchMessages(ctx context.Context, query string, args ...
 			&t.CasoId,
 			&t.FromUser,
 			&t.ToUser,
-			&t.MediaUrl,
+			pq.Array(&t.MediaUrl),
 			&t.Content,
 			&t.IsRead,
 			&t.CreatedOn,
