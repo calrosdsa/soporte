@@ -187,7 +187,7 @@ func (p *pgAccountRepository) RegisterFuncionario(ctx context.Context, a *accoun
 	query = `insert into funcionarios (nombre,apellido,email,empresa_id,created_on,user_id,rol,superior_id) values ($1,$2,$3,$4,$5,$6,$7,$8)
 	returning funcionario_id,email,estado,rol,empresa_id;`
 	err = conn.QueryRowContext(p.Context, query, a.Nombre,a.Apellido, a.Email, a.EmpresaId, time.Now(), userId, a.Rol, a.SuperiorId).Scan(
-		&res.Id,&res.Email,&res.EmpresaId,&res.EmpresaId,
+		&res.Id,&res.Email,&res.Estado,&res.EmpresaId,&res.EmpresaId,
 	)
 	// log.Println(*t.Username)
 	if err != nil {
