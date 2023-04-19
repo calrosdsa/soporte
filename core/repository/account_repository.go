@@ -125,7 +125,7 @@ func (p *pgAccountRepository) RegisterCliente(ctx context.Context, a *account.Re
 	cliente := user.UserAuth{}
 	log.Println(reflect.TypeOf(a.EmpresaId))
 	query3 := `insert into clientes nombre,apellido,email,empresa_id,created_on,user_id,rol,superior_id values ($1,$2,$3,$4,$5,$6,$7,$8)
-	returning client_id,email,estado,rol,empresa_id,('');`
+	returning client_id,email,estado,rol,empresa_id;`
 	err = conn.QueryRowContext(p.Context, query3, a.Nombre,a.Apellido ,a.Email, a.EmpresaId, time.Now(), userId, a.Rol, a.SuperiorId).Scan(
 		&cliente.Id,&cliente.Email,&cliente.EmpresaId,&cliente.EmpresaId,
 	)
@@ -185,7 +185,7 @@ func (p *pgAccountRepository) RegisterFuncionario(ctx context.Context, a *accoun
 	// log.Panicln("USER INSERTED")
 	res = user.UserAuth{}
 	query = `insert into funcionarios (nombre,apellido,email,empresa_id,created_on,user_id,rol,superior_id) values ($1,$2,$3,$4,$5,$6,$7,$8)
-	returning funcionario_id,email,estado,rol,empresa_id,('');`
+	returning funcionario_id,email,estado,rol,empresa_id;`
 	err = conn.QueryRowContext(p.Context, query, a.Nombre,a.Apellido, a.Email, a.EmpresaId, time.Now(), userId, a.Rol, a.SuperiorId).Scan(
 		&res.Id,&res.Email,&res.EmpresaId,&res.EmpresaId,
 	)
