@@ -58,12 +58,12 @@ func (p *pgAccountRepository) Login(ctx context.Context, loginRequest *account.L
 		return res, model.ErrNotFound
 	}
 	res = user.UserAuth{}
-	query1 := `select (client_id,email,estado,rol,empresa_id,nombre) from clientes where user_id = $1 limit 1;`
-	err = p.Conn.QueryRowContext(ctx, query1, userId).Scan(&res)
+	query1 := `select client_id,email,estado,rol,empresa_id,nombre from clientes where user_id = $1 limit 1;`
+	err = p.Conn.QueryRowContext(ctx, query1, userId).Scan(&res.Id,&res.Email,&res.Estado,&res.Rol,&res.EmpresaId,&res.Username)
 	if err != nil {
 		log.Println("isFuncionario")
-		query1 := `select (funcionario_id,email,estado,rol,empresa_id,nombre) from funcionarios where user_id = $1 limit 1;`
-		err = p.Conn.QueryRowContext(ctx, query1, userId).Scan(&res)
+		query1 := `select funcionario_id,email,estado,rol,empresa_id,nombre from funcionarios where user_id = $1 limit 1;`
+		err = p.Conn.QueryRowContext(ctx, query1, userId).Scan(&res.Id,&res.Email,&res.Estado,&res.Rol,&res.EmpresaId,&res.Username)
 		if err != nil {
 			return res, model.ErrNotFound
 		}
@@ -116,7 +116,7 @@ func (p *pgAccountRepository) RegisterCliente(ctx context.Context, a *account.Re
 		}
 	}
 	query2 := `insert into users (email,username,created_on,password) values ($1,$2,now(),crypt($3, gen_salt('bf')))
-	returning (user_id);`
+	returning user_id;`
 	var userId string
 	err = conn.QueryRowContext(p.Context, query2, a.Email, a.Nombre, a.Password).Scan(&userId)
 	if err != nil {
@@ -124,9 +124,11 @@ func (p *pgAccountRepository) RegisterCliente(ctx context.Context, a *account.Re
 	}
 	cliente := user.UserAuth{}
 	log.Println(reflect.TypeOf(a.EmpresaId))
-	query3 := `insert into clientes (nombre,apellido,email,empresa_id,created_on,user_id,rol,superior_id) values ($1,$2,$3,$4,$5,$6,$7,$8)
-	returning (client_id,email,estado,rol,empresa_id,(''));`
-	err = conn.QueryRowContext(p.Context, query3, a.Nombre,a.Apellido ,a.Email, a.EmpresaId, time.Now(), userId, a.Rol, a.SuperiorId).Scan(&cliente)
+	query3 := `insert into clientes nombre,apellido,email,empresa_id,created_on,user_id,rol,superior_id values ($1,$2,$3,$4,$5,$6,$7,$8)
+	returning client_id,email,estado,rol,empresa_id,('');`
+	err = conn.QueryRowContext(p.Context, query3, a.Nombre,a.Apellido ,a.Email, a.EmpresaId, time.Now(), userId, a.Rol, a.SuperiorId).Scan(
+		&cliente.Id,&cliente.Email,&cliente.EmpresaId,&cliente.EmpresaId,
+	)
 	if err != nil {
 		return user.UserAuth{}, err
 	}
@@ -183,8 +185,10 @@ func (p *pgAccountRepository) RegisterFuncionario(ctx context.Context, a *accoun
 	// log.Panicln("USER INSERTED")
 	res = user.UserAuth{}
 	query = `insert into funcionarios (nombre,apellido,email,empresa_id,created_on,user_id,rol,superior_id) values ($1,$2,$3,$4,$5,$6,$7,$8)
-	returning (funcionario_id,email,estado,rol,empresa_id,(''));`
-	err = conn.QueryRowContext(p.Context, query, a.Nombre,a.Apellido, a.Email, a.EmpresaId, time.Now(), userId, a.Rol, a.SuperiorId).Scan(&res)
+	returning funcionario_id,email,estado,rol,empresa_id,('');`
+	err = conn.QueryRowContext(p.Context, query, a.Nombre,a.Apellido, a.Email, a.EmpresaId, time.Now(), userId, a.Rol, a.SuperiorId).Scan(
+		&res.Id,&res.Email,&res.EmpresaId,&res.EmpresaId,
+	)
 	// log.Println(*t.Username)
 	if err != nil {
 		return
@@ -197,42 +201,3 @@ func (p *pgAccountRepository) RegisterFuncionario(ctx context.Context, a *accoun
 
 	return
 }
-
-// func (p *pgAccountRepository) ValidateInvitation(ctx context.Context,mail *string,rol *int)(err error){
-// 	var query string
-// 	var email string
-// 	if *rol == int(model.RoleCliente) || *rol == int(model.RoleClienteAdmin) {
-// 		query = `select email from invitaciones where email = $1;`
-// 		err = p.Conn.QueryRowContext(ctx,query,mail).Scan(&email)
-// 	}else if *rol == int(RoleFuncionario) || *rol == int(RoleFuncionarioAdmin) {
-
-// 	}
-// }
-
-// func (p *pgAccountRepository) fetch(ctx context.Context, query string, args ...interface{}) (result []account.User, err error) {
-// 	rows, err := p.Conn.Query(p.Context, query, args...)
-// 	defer func ()  {
-// 		rows.Close()
-// 	   }()
-// 	result = make([]account.User, 0)
-// 	t := account.User{}
-// 	for rows.Next() {
-// 		err = rows.Scan(
-// 			&t.UserId,
-// 			&t.Username,
-// 			&t.Password,
-// 			&t.LastLogin,
-// 			&t.CreatedOn,
-// 			&t.Email,
-// 			&t.Estado,
-// 		)
-// 		if err != nil {
-// 			logrus.Error(err)
-// 			return nil, err
-// 		}
-// 		result = append(result, t)
-// 		log.Println(result)
-// 	}
-
-// 	return result, nil
-// }
