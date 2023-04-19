@@ -10,7 +10,7 @@ type Message struct {
 	FromUser       string `json:"from_user"`
 	ToUser   string `json:"to_user"`
 	CasoId          string `json:"caso_id"`
-	MediaUrl        []string `json:"media_url"`
+	MediaUrl        []uint8 `json:"media_url"`
 	Content         string `json:"content"`
 	IsRead          bool   `json:"is_read"`
 	CreatedOn       *time.Time `json:"created_on"`
