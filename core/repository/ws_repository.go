@@ -10,7 +10,7 @@ import (
 
 	"soporte-go/core/model/caso"
 
-	"github.com/lib/pq"
+	// "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 )
 
