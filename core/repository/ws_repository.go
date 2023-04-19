@@ -59,7 +59,7 @@ func (p *wsRepository) SaveMessage(ctx context.Context, m *ws.MessageData) (res 
 	log.Println(m.MediaUrl)
 	query = `insert into messages (from_user,to_user,caso_id,media_url,content,is_read,created_on) 
 	values ($1,$2,$3,$4,$5,$6,$7) returning (id,from_user,to_user,caso_id,media_url,content,is_read,created_on,is_deleted);`
-	err = p.Conn.QueryRowContext(ctx, query, m.FromUser, m.ToUser, m.CasoId,pq.Array(m.MediaUrl), m.Content, m.IsRead, time.Now()).Scan(&message)
+	err = p.Conn.QueryRowContext(ctx, query, m.FromUser, m.ToUser, m.CasoId,*m.MediaUrl, m.Content, m.IsRead, time.Now()).Scan(&message)
 	return
 }
 
