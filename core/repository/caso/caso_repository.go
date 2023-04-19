@@ -38,21 +38,23 @@ func NewPgCasoRepository(conn *sql.DB, ctx context.Context) caso.CasoRepository 
 
 func (p *pgCasoRepository) GetCasosCliForReporte(ctx context.Context,options *caso.CasoReporteOptions)(res []caso.Caso,err error) {
 	var query string
-	// log.Println(len(options.Areas))
+	log.Println(options.Estados)
 	if len(options.Estados) == 3{
 		// log.Println("ALL estaods")
-		query = `select clientes.nombre,clientes.apellido,funcionarios.nombre,funcionarios.apellido,titulo,id,descripcion,detalles_de_finalizacion,empresa,area,casos.created_on,
-		casos.updated_on,fecha_inicio,fecha_fin,prioridad,casos.estado,casos.client_id,casos.funcionario_id,casos.superior_id,casos.rol,('')
-		from casos inner join clientes on clientes.client_id = casos.client_id left join funcionarios
-		 on funcionarios.funcionario_id = casos.funcionario_id
-		 where casos.created_on between $1 and $2 and casos.area = any($3);`
+		query = `select clientes.nombre,clientes.apellido,funcionarios.nombre,funcionarios.apellido,titulo,C.id,descripcion,detalles_de_finalizacion,empresa,area,c.created_on,
+		c.updated_on,fecha_inicio,fecha_fin,prioridad,c.estado,c.client_id,c.funcionario_id,c.superior_id,c.rol,p.nombre
+		from casos as c inner join clientes on clientes.client_id = c.client_id left join funcionarios
+		 on funcionarios.funcionario_id = c.funcionario_id
+		left join proyectos as p on c.area = p.id
+		 where c.created_on between $1 and $2 and c.area = any($3);`
 		res,err = p.fetchCasosDetail(ctx,query,options.StartDate,options.EndDate,pq.Array(options.Areas))
 	}else{
-		query = `select clientes.nombre,clientes.apellido,funcionarios.nombre,funcionarios.apellido,titulo,id,descripcion,detalles_de_finalizacion,empresa,area,casos.created_on,
-		casos.updated_on,fecha_inicio,fecha_fin,prioridad,casos.estado,casos.client_id,casos.funcionario_id,casos.superior_id,casos.rol,('')
-		from casos inner join clientes on clientes.client_id = casos.client_id left join funcionarios 
-		on funcionarios.funcionario_id = casos.funcionario_id
-		 where casos.created_on between $1 and $2 and casos.estado = any($3) and casos.area = any($4);`
+		query = `select clientes.nombre,clientes.apellido,funcionarios.nombre,funcionarios.apellido,titulo,c.id,descripcion,detalles_de_finalizacion,empresa,area,c.created_on,
+		c.updated_on,fecha_inicio,fecha_fin,prioridad,c.estado,c.client_id,c.funcionario_id,c.superior_id,c.rol,p.nombre
+		from casos as c inner join clientes on clientes.client_id = c.client_id 
+		left join funcionarios on funcionarios.funcionario_id = c.funcionario_id
+		left join proyectos as p on c.area = p.id
+		 where c.created_on between $1 and $2 and c.estado = any($3) and c.area = any($4);`
 		res,err = p.fetchCasosDetail(ctx,query,options.StartDate,options.EndDate,pq.Array(options.Estados),pq.Array(options.Areas))
 	}
 	return
@@ -60,20 +62,23 @@ func (p *pgCasoRepository) GetCasosCliForReporte(ctx context.Context,options *ca
 
 func (p *pgCasoRepository) GetCasosFunForReporte(ctx context.Context,options *caso.CasoReporteOptions)(res []caso.Caso,err error){
 	var query string
+	log.Println(options.Estados)
 	if len(options.Estados) == 3{
 		// log.Println("ALL estaods")
-		query = `select uc.nombre,uc.apellido,uf.nombre,uf.apellido,titulo,id,descripcion,detalles_de_finalizacion,empresa,area,c.created_on,
-		c.updated_on,fecha_inicio,fecha_fin,prioridad,c.estado,c.funcionario_id,c.funcionario_id,c.superior_id,c.rol,('')
+		query = `select uc.nombre,uc.apellido,uf.nombre,uf.apellido,titulo,c.id,descripcion,detalles_de_finalizacion,empresa,area,c.created_on,
+		c.updated_on,fecha_inicio,fecha_fin,prioridad,c.estado,c.funcionario_id,c.funcionario_id,c.superior_id,c.rol,p.nombre
 		from casos as c inner join funcionarios as uc on uc.funcionario_id = c.client_id 
 		left join funcionarios as uf on uf.funcionario_id = c.funcionario_id
+		left join proyectos as p on c.area = p.id
 		 where c.created_on between $1 and $2 and c.area = any($3);`
 		res,err = p.fetchCasosDetail(ctx,query,options.StartDate,options.EndDate,pq.Array(options.Areas))
 	}else{
-		query = `select uc.nombre,uc.apellido,uf.nombre,uf.apellido,titulo,id,descripcion,detalles_de_finalizacion,empresa,area,c.created_on,
-		c.updated_on,fecha_inicio,fecha_fin,prioridad,c.estado,c.funcionario_id,c.funcionario_id,c.superior_id,c.rol,('')
+		query = `select uc.nombre,uc.apellido,uf.nombre,uf.apellido,titulo,c.id,descripcion,detalles_de_finalizacion,empresa,area,c.created_on,
+		c.updated_on,fecha_inicio,fecha_fin,prioridad,c.estado,c.funcionario_id,c.funcionario_id,c.superior_id,c.rol,p.nombre
 		from casos as c inner join funcionarios as uc on uc.funcionario_id = c.client_id 
 		left join funcionarios as uf on uf.funcionario_id = c.funcionario_id
-		 where c.created_on between $1 and $2 and c.area = any($3) and c.area = any($4);`
+		left join proyectos as p on c.area = p.id
+		 where c.created_on between $1 and $2 and c.estado = any($3) and c.area = any($4);`
 		res,err = p.fetchCasosDetail(ctx,query,options.StartDate,options.EndDate,pq.Array(options.Estados),pq.Array(options.Areas))
 	}	
 	return
