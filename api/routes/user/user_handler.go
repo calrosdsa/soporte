@@ -217,6 +217,7 @@ func (a *UserHandler) UserRegisterInvitation(c echo.Context) (err error) {
 		return c.JSON(http.StatusUnprocessableEntity, err.Error())
 	}
 	var rol int
+	log.Println(to.IsAdmin)
 	if to.EmpresaId != 0 {
 		if to.IsAdmin {
 			rol = 2
@@ -231,7 +232,7 @@ func (a *UserHandler) UserRegisterInvitation(c echo.Context) (err error) {
 			} else {
 				rol = 0
 			}
-		} else if claims.Rol == int(model.RoleFuncionarioAdmin) {
+			} else if claims.Rol == int(model.RoleFuncionarioAdmin) {
 			if to.IsAdmin {
 				rol = 3
 			} else {
@@ -242,7 +243,8 @@ func (a *UserHandler) UserRegisterInvitation(c echo.Context) (err error) {
 		}
 		// log.Println(rol)
 	}
-
+	
+	log.Println(claims.Empresa)
 	ctx := c.Request().Context()
 	res, err := a.UserUcase.UserRegisterInvitation(ctx, &to, claims.UserId, rol, claims.Empresa)
 	// log.Println(url)
