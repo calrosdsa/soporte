@@ -24,9 +24,10 @@ func NewMediaRepository(conn *sql.DB,ctx context.Context) media.MediaRepository 
 
 func (p *mediaRepository) UploadFileCaso(ctx context.Context,url string,id string,descripcion string,ext string)(res media.CasoFile,err error){
 	query := `insert into recursos (file_url,ext,descripcion,caso_id,created_on) values ($1,$2,$3,$4,$5)
-	returning (id,file_url,ext,descripcion,caso_id,created_on);`
+	returning id,file_url,ext,descripcion,caso_id,created_on;`
 	t := media.CasoFile{}
-	err =  p.Conn.QueryRowContext(ctx,query,url,ext,descripcion,id,time.Now()).Scan(&t)
+	err =  p.Conn.QueryRowContext(ctx,query,url,ext,descripcion,id,time.Now()).Scan(
+		&t.Id,&t.FileUrl,&t.Extension,&t.Descripcion,&t.Descripcion,&t.CasoId,&t.CreatedOn)
 	if err != nil{
 		return
 	}

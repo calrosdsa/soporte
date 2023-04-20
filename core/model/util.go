@@ -61,7 +61,7 @@ type Util interface {
 	IsUserRol(rol int) bool
 	//devuele page count and offset
 	PaginationValues(p int,of int)(page int,offset int)
-	//is admin rol 5
+	//is admin rol 4
 	IsAdminFuncionario(rol int) bool
 }
 
