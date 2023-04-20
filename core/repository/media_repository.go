@@ -27,7 +27,7 @@ func (p *mediaRepository) UploadFileCaso(ctx context.Context,url string,id strin
 	returning id,file_url,ext,descripcion,caso_id,created_on;`
 	t := media.CasoFile{}
 	err =  p.Conn.QueryRowContext(ctx,query,url,ext,descripcion,id,time.Now()).Scan(
-		&t.Id,&t.FileUrl,&t.Extension,&t.Descripcion,&t.Descripcion,&t.CasoId,&t.CreatedOn)
+		&t.Id,&t.FileUrl,&t.Extension,&t.Descripcion,&t.CasoId,&t.CreatedOn)
 	if err != nil{
 		return
 	}
