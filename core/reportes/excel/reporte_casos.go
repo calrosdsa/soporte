@@ -73,7 +73,7 @@ func ReporteCasosExcel(casos []caso.Caso,casos2 []caso.Caso,buffer *bytes.Buffer
 func CreateSheet(casos []caso.Caso,sheet string,f *excelize.File){
 	var cliente string
 	f.NewSheet(sheet)
-	f.SetColWidth(sheet, "A", "A", 40)
+	f.SetColWidth(sheet, "A", "A", 50)
 	f.SetColWidth(sheet, "B", "E", 20)
 	f.SetColWidth(sheet, "E", "F", 15)
 	f.SetColWidth(sheet, "F", "G", 30)
@@ -110,7 +110,6 @@ func CreateSheet(casos []caso.Caso,sheet string,f *excelize.File){
 		if c.FuncionarioName != nil {
 			funcionario = *c.FuncionarioName + " " + *c.FuncionarioApellido
 		}
-		log.Println("121")
 		slice := []interface{}{c.Titulo,c.CreatedOn,c.FechaInicio,c.FechaFin,GetCasoEstado(*c.Estado),cliente,funcionario,*c.ProyectoName}
 		cell, err := excelize.CoordinatesToCellName(1, idx+3)
 		// f.SetColWidth("Sheet1","B", 35)
