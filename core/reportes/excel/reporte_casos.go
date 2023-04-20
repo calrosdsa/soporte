@@ -110,7 +110,7 @@ func CreateSheet(casos []caso.Caso,sheet string,f *excelize.File){
 		if c.FuncionarioName != nil {
 			funcionario = *c.FuncionarioName + " " + *c.FuncionarioApellido
 		}
-		slice := []interface{}{c.Titulo,c.CreatedOn,c.FechaFin,c.FechaFin,GetCasoEstado(*c.Estado),cliente,funcionario,*c.ProyectoName}
+		slice := []interface{}{c.Titulo,c.CreatedOn,c.FechaInicio,c.FechaFin,GetCasoEstado(*c.Estado),cliente,funcionario,*c.ProyectoName}
 		cell, err := excelize.CoordinatesToCellName(1, idx+3)
 		// f.SetColWidth("Sheet1","B", 35)
 		if err != nil {
