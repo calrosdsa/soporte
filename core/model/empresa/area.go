@@ -31,6 +31,8 @@ type ProyectoDetail struct {
 	EmpresaParentId  int                `json:"empresa_parent_id"`
 	CreatedOn        time.Time          `json:"created_on"`
 	CreadorId        string             `json:"creador_id"`
+	AreaName string `json:"area_name"`
+	EmpresaName string `json:"empresa_name"`
 	ProyectoDuration []ProyectoDuration `json:"proyecto_duration"`
 }
 

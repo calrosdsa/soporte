@@ -56,9 +56,13 @@ func (p *pgEmpresaRepository) GetAreaByName(ctx context.Context, n string) (res 
 
 func (p *pgEmpresaRepository) GetProyectoByName(ctx context.Context, n string) (res empresa.ProyectoDetail, err error) {
 	var query string
-	query = `select  id,nombre,parent_id,estado ,empresa_id,empresa_parent_id ,created_on,creador_id from proyectos where nombre = $1; `
-	err = p.Conn.QueryRowContext(ctx, query, n).Scan(&res.Id, &res.Nombre, &res.ParentId, &res.Estado, &res.EmpresaId, &res.EmpresaParentId,
-		&res.CreatedOn, &res.CreadorId)
+	query = `select  p.id,p.nombre,p.parent_id,p.estado ,p.empresa_id,p.empresa_parent_id ,p.created_on,p.creador_id,
+     e.nombre,a.nombre from proyectos as p 
+	 left join empresas as e on e.id = empresa_id
+	 left join areas as a on a.id = p.parent_id
+	 where p.nombre = $1; `
+	 err = p.Conn.QueryRowContext(ctx, query, n).Scan(&res.Id, &res.Nombre, &res.ParentId, &res.Estado, &res.EmpresaId, &res.EmpresaParentId,
+		&res.CreatedOn, &res.CreadorId,&res.EmpresaName,&res.AreaName)
 	if err != nil {
 		log.Println(err)
 		return
