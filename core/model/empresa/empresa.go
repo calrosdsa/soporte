@@ -36,6 +36,7 @@ type EmpresaRepository interface {
 	GetProyectos(ctx context.Context, parentId int) (res []Area, err error)
 
 	GetAreaByName(context.Context, string) (Area, error)
+	GetProyectoByName(context.Context, string) (ProyectoDetail, error)
 
 	GetAreasEmpresa(context.Context, int) ([]Area, error)
 	GetAreasFuncionario(context.Context, string) ([]Area, error)
@@ -69,6 +70,8 @@ type EmpresaUseCase interface {
 
 	GetEmpresa(ctx context.Context, userId string, rol int) (res Empresa, err error)
 	GetAreaByName(context.Context, string) (Area, error)
+	GetProyectoByName(context.Context, string) (ProyectoDetail, error)
+
 	StoreEmpresa(ctx context.Context, empresa *Empresa) (err error)
 
 	GetAreasUser(ctx context.Context, userId string) (res []AreaUser, err error)

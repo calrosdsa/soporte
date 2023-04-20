@@ -29,6 +29,8 @@ func NewEmpresaHandler(e *echo.Echo, u empresa.EmpresaUseCase) {
 	e.GET("empresa/areas-user/", handler.GetAreasUser)
 
 	e.GET("empresa/areas/:areaName/", handler.GetAreaDetail)
+	e.GET("empresa/proyecto/:proyectoName/", handler.GetProyectoDetail)
+
 	e.POST("empresa/", handler.StoreEmpresa)
 	e.POST("empresa/create-area/", handler.StoreArea)
 	e.POST("empresa/add-user-to-area/", handler.AddUserToArea)
@@ -217,6 +219,22 @@ func (u *EmpresaHandler) GetAreaDetail(c echo.Context) (err error) {
 	n := c.Param("areaName")
 	ctx := c.Request().Context()
 	res, err := u.EmpresaUseCase.GetAreaByName(ctx, n)
+	// empresa.Id = casoId
+	if err != nil {
+		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
+func (u *EmpresaHandler) GetProyectoDetail(c echo.Context) (err error) {
+	// token := c.Request().Header["Authorization"][0]
+	// _, err = r.ExtractClaims(token)
+	// if err != nil {
+		// return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	// }
+	n := c.Param("proyectoName")
+	ctx := c.Request().Context()
+	res, err := u.EmpresaUseCase.GetProyectoByName(ctx, n)
 	// empresa.Id = casoId
 	if err != nil {
 		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})

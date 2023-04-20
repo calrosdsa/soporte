@@ -54,6 +54,15 @@ func (uc *empresaUseCase) AreaChangeState(ctx context.Context, state int, id int
 	return err
 }
 
+
+func (uc *empresaUseCase) GetProyectoByName(ctx context.Context, n string) (res empresa.ProyectoDetail, err error) {
+	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
+	defer cancel()
+	res, err = uc.empresaRepo.GetProyectoByName(ctx, n)
+	return
+}
+
+
 func (uc *empresaUseCase) GetAreaByName(ctx context.Context, n string) (res empresa.Area, err error) {
 	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
 	defer cancel()

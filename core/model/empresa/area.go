@@ -13,6 +13,27 @@ type Area struct {
 	CreadorId string    `json:"creador_id"`
 }
 
+type ProyectoDuration struct {
+	Id         int       `json:"id"`
+	ProyectoId int       `json:"proyecto_id"`
+	StartDate  time.Time `json:"start_date"`
+	EndDate    time.Time `json:"end_date"`
+}
+
+type ProyectoDetail struct {
+	Id       int    `json:"id"`
+	Nombre   string `json:"nombre"`
+	ParentId int    `json:"parent_id"`
+	// Descripcion *string   `json:"descripcion"`
+	Estado    int `json:"estado"`
+	EmpresaId int `json:"empresa_id"`
+	// EmpresaCli   int       `json:"empresa_id_cli"`
+	EmpresaParentId  int                `json:"empresa_parent_id"`
+	CreatedOn        time.Time          `json:"created_on"`
+	CreadorId        string             `json:"creador_id"`
+	ProyectoDuration []ProyectoDuration `json:"proyecto_duration"`
+}
+
 type Proyecto struct {
 	Id       int    `json:"id"`
 	Nombre   string `json:"nombre"`

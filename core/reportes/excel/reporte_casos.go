@@ -73,7 +73,7 @@ func ReporteCasosExcel(casos []caso.Caso,casos2 []caso.Caso,buffer *bytes.Buffer
 func CreateSheet(casos []caso.Caso,sheet string,f *excelize.File){
 	var cliente string
 	f.NewSheet(sheet)
-	f.SetColWidth(sheet, "A", "A", 50)
+	f.SetColWidth(sheet, "A", "A", 55)
 	f.SetColWidth(sheet, "B", "E", 20)
 	f.SetColWidth(sheet, "E", "F", 15)
 	f.SetColWidth(sheet, "F", "G", 30)

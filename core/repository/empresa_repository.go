@@ -38,7 +38,8 @@ func (p *pgEmpresaRepository) AreaChangeState(ctx context.Context, state int, id
 }
 
 func (p *pgEmpresaRepository) GetAreaByName(ctx context.Context, n string) (res empresa.Area, err error) {
-	query := `select * from areas where nombre = $1;`
+	var query string
+	query = `select * from areas where nombre = $1;`
 	list, err := p.fetchAreas(ctx, query, n)
 	if err != nil {
 		return empresa.Area{}, err
@@ -49,6 +50,23 @@ func (p *pgEmpresaRepository) GetAreaByName(ctx context.Context, n string) (res 
 		return res, model.ErrNotFound
 	}
 
+	return
+
+}
+
+func (p *pgEmpresaRepository) GetProyectoByName(ctx context.Context, n string) (res empresa.ProyectoDetail, err error) {
+	var query string
+	query = `select  id,nombre,parent_id,estado ,empresa_id,empresa_parent_id ,created_on,creador_id from proyectos where nombre = $1; `
+	err = p.Conn.QueryRowContext(ctx, query, n).Scan(&res.Id, &res.Nombre, &res.ParentId, &res.Estado, &res.EmpresaId, &res.EmpresaParentId,
+		&res.CreatedOn, &res.CreadorId)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	query = `select id,proyecto_id,start_date,end_date from proyecto_duration where proyecto_id = $1` 
+	list,err := p.fetchProyectoDuration(ctx,query,res.Id)
+
+	res.ProyectoDuration = list
 	return
 
 }
@@ -182,8 +200,8 @@ func (p *pgEmpresaRepository) CreateProyecto(ctx context.Context, a *empresa.Pro
 
 	start, _ := time.Parse("2006-01-02", a.Start)
 	end, _ := time.Parse("2006-01-02", a.End)
-	query  = `insert into proyecto_duration (proyecto_id,start_date,end_date) values($1,$2,$3)`
-	_,err = p.Conn.ExecContext(ctx,query,proyectoId,start,end)
+	query = `insert into proyecto_duration (proyecto_id,start_date,end_date) values($1,$2,$3)`
+	_, err = p.Conn.ExecContext(ctx, query, proyectoId, start, end)
 	if err != nil {
 		log.Println(err)
 	}
@@ -315,6 +333,30 @@ func (p *pgEmpresaRepository) fetchAreas(ctx context.Context, query string, args
 		}
 		result = append(result, t)
 		log.Println(result)
+	}
+
+	return result, nil
+}
+
+func (p *pgEmpresaRepository) fetchProyectoDuration(ctx context.Context, query string, args ...interface{}) (result []empresa.ProyectoDuration, err error) {
+	rows, err := p.Conn.QueryContext(p.Context, query, args...)
+	defer func() {
+		rows.Close()
+	}()
+	result = make([]empresa.ProyectoDuration, 0)
+	for rows.Next() {
+		t := empresa.ProyectoDuration{}
+		err = rows.Scan(
+			&t.Id,
+			&t.ProyectoId,
+			&t.StartDate,
+			&t.EndDate,
+		)
+		if err != nil {
+			logrus.Error(err)
+			return nil, err
+		}
+		result = append(result, t)
 	}
 
 	return result, nil
