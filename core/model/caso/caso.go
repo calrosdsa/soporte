@@ -57,7 +57,7 @@ type Caso struct {
 	ClienteApellido        *string    `json:"cliente_apellido"`
 	FuncionarioApellido    *string    `json:"funcionario_apellido,omitempty"`
 	Rol                    *int       `json:"rol"`
-	ProyectoName           *string    `json:"proyecto_namE"`
+	ProyectoName           *string    `json:"proyecto_name"`
 }
 
 type CasoRepository interface {
