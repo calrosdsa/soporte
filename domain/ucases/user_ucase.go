@@ -127,7 +127,7 @@ func (a *userUseCase) UserRegisterInvitation(ctx context.Context, to *user.UserR
 	invitations := make([]user.UserShortInfo, len(to.To))
 	for index, value := range to.To {
 		tokenInvitation, _ := jwt.GenerateInvitationJWT(id, rol, empresaId, value)
-		url := fmt.Sprintf("http://localhost:3000/auth/registro?auth=%s", tokenInvitation)
+		url := fmt.Sprintf("https://template-f-pearl.vercel.app/auth/registro?auth=%s", tokenInvitation)
 		t := user.UserShortInfo{
 			Nombre:  value,
 			Id:      id,

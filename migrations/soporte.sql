@@ -73,8 +73,8 @@ create table if not exists messages (
 -- insert into funcionarios(email,nombre,apellido,rol,empresa_id,user_id,superior_id,created_on) values('jorgemiranda0180@gmail.com','Jorge','Miranda',3,6,'8ba62445-3c62-45ad-aab5-e15bc5d68323','8ba62445-3c62-45ad-aab5-e15bc5d68323',now());
 
 
-insert into users (user_id,email,username,password,created_on) values ('8ba62445-3c62-45ad-aab5-e15bc5d68321','marca@yopmail','henry_marca',crypt('201120',gen_salt('bf')),now());
-insert into funcionarios(email,nombre,apellido,rol,empresa_id,user_id,superior_id,created_on) values('marca@yopmail','Henry','Marca',3,6,'8ba62445-3c62-45ad-aab5-e15bc5d68321','8ba62445-3c62-45ad-aab5-e15bc5d68321',now());
+insert into users (user_id,email,username,password,created_on) values ('8ba62445-3c62-45ad-aab5-e15bc5d68329','rvillarroel@teclu.com','rvillarroel',crypt('201120',gen_salt('bf')),now());
+insert into funcionarios(email,nombre,apellido,rol,empresa_id,user_id,superior_id,created_on) values('rvillarroel@teclu.com','Ronald','Villaroel',3,6,'8ba62445-3c62-45ad-aab5-e15bc5d68329','8ba62445-3c62-45ad-aab5-e15bc5d68329',now());
 
 -- select nombre,apellido,titulo from clientes inner join casos on clientes.client_id = casos.client_id;
 

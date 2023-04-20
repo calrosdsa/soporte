@@ -61,14 +61,14 @@ func (p *pgEmpresaRepository) GetProyectoByName(ctx context.Context, n string) (
 	 left join empresas as e on e.id = empresa_id
 	 left join areas as a on a.id = p.parent_id
 	 where p.nombre = $1; `
-	 err = p.Conn.QueryRowContext(ctx, query, n).Scan(&res.Id, &res.Nombre, &res.ParentId, &res.Estado, &res.EmpresaId, &res.EmpresaParentId,
-		&res.CreatedOn, &res.CreadorId,&res.EmpresaName,&res.AreaName)
+	err = p.Conn.QueryRowContext(ctx, query, n).Scan(&res.Id, &res.Nombre, &res.ParentId, &res.Estado, &res.EmpresaId, &res.EmpresaParentId,
+		&res.CreatedOn, &res.CreadorId, &res.EmpresaName, &res.AreaName)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	query = `select id,proyecto_id,start_date,end_date from proyecto_duration where proyecto_id = $1` 
-	list,err := p.fetchProyectoDuration(ctx,query,res.Id)
+	query = `select id,proyecto_id,start_date,end_date from proyecto_duration where proyecto_id = $1`
+	list, err := p.fetchProyectoDuration(ctx, query, res.Id)
 
 	res.ProyectoDuration = list
 	return

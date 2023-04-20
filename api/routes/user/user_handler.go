@@ -174,7 +174,7 @@ func (a *UserHandler) ResendEmail(c echo.Context) (err error) {
 	if err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, err.Error())
 	}
-	url := fmt.Sprintf("http://localhost:3000/auth/registro?auth=%s", tokenInvitation)
+	url := fmt.Sprintf("https://template-f-pearl.vercel.app/auth/registro?auth=%s", tokenInvitation)
 	a.UserUcase.ReSendEmail([]string{m}, url)
 	return c.JSON(http.StatusOK, nil)
 
