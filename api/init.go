@@ -46,9 +46,9 @@ func InitServer(db *pgxpool.Pool, db2 *sql.DB, ctx context.Context, sess *sessio
 	// e.Use(middl.CORS)
 	// e.Use(middleware.Logger())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"https://soporte-omega.vercel.app"},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
-		// AllowMethods: []string{"*"},
+		AllowOrigins: []string{"*"},
+		AllowHeaders: []string{"*"},
+		AllowMethods: []string{"*"},
 	}))
 	// e.Use(middleware.Recover())
 	mUser := "jmiranda@teclu.com"
