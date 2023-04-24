@@ -113,11 +113,13 @@ type CasoUseCase interface {
 	AsignarFuncionarioSoporte(ctx context.Context, u *UserCaso) (err error)
 
 	FinalizarCaso(ctx context.Context, fD *FinalizacionDetail) error
-	GetReporteCasos(ctx context.Context, t model.FileType, options *CasoReporteOptions) (b bytes.Buffer, err error)
-
+	
 	GetUsuariosCaso(ctx context.Context, cId string) (res []user.UserForList, err error)
-
+	
 	GetCasosFromUserCaso(ctx context.Context, id string, q *CasoQuery) ([]Caso, error)
+	
+	GetReporteCasos(ctx context.Context, t model.FileType, options *CasoReporteOptions) (b bytes.Buffer, err error)
+	GetReporteCaso(ctx context.Context, t model.FileType,c Caso) (b bytes.Buffer, err error)
 
 	// CerrarCaso(ctx context.Context,id string)(error)
 }

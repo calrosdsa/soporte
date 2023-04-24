@@ -8,6 +8,7 @@ import (
 	"soporte-go/core/model/caso"
 	"soporte-go/core/model/user"
 	"soporte-go/core/reportes/excel"
+	"soporte-go/core/reportes/html"
 	"soporte-go/core/reportes/pdf"
 	"time"
 )
@@ -42,6 +43,16 @@ func (uc *casoUseCase) AsignarFuncionarioSoporte(ctx context.Context, u *caso.Us
 	return
 }
 
+func (uc *casoUseCase) GetReporteCaso(ctx context.Context, t model.FileType,c caso.Caso) (b bytes.Buffer, err error) {
+	var buffer bytes.Buffer
+	switch t {
+	case model.HTML:
+		html.HtmlCasoReporte(&buffer,c)
+	}
+	
+	return buffer, err
+}
+
 func (uc *casoUseCase) GetReporteCasos(ctx context.Context, t model.FileType, options *caso.CasoReporteOptions) (b bytes.Buffer, err error) {
 	var buffer bytes.Buffer
 	casos, err := uc.casoRepo.GetCasosCliForReporte(ctx, options)
@@ -68,6 +79,7 @@ func (uc *casoUseCase) GetReporteCasos(ctx context.Context, t model.FileType, op
 			return
 		}
 	}
+	
 	return buffer, err
 }
 
