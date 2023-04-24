@@ -78,11 +78,11 @@ func (u *CasoHandler) GetReporteHtml(c echo.Context) (err error) {
 }
 
 func (u *CasoHandler) GetUsuariosCaso(c echo.Context) (err error) {
-	// token := c.Request().Header["Authorization"][0]
-	// _, err = _routes.ExtractClaims(token)
-	// if err != nil {
-	// 	return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
-	// }
+	token := c.Request().Header["Authorization"][0]
+	_, err = _routes.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
 	id := c.Param("casoId")
 	ctx := c.Request().Context()
 	res, err := u.CasoUseCase.GetUsuariosCaso(ctx, id)
