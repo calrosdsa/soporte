@@ -1,18 +1,20 @@
 package caso
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+
 	// "reflect"
-	"soporte-go/core/model/caso"
 	model "soporte-go/core/model"
+	"soporte-go/core/model/caso"
 	"strconv"
 
 	// "github.com/golang-jwt/jwt"
-	"github.com/labstack/echo/v4"
 	_routes "soporte-go/api/routes"
-	"github.com/sirupsen/logrus"
 
+	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
 )
 
 type CasoHandler struct {
@@ -27,16 +29,59 @@ func NewCasoHandler(e *echo.Echo, uc caso.CasoUseCase) {
 	e.POST("/caso/", handler.CreateCaso)
 	e.GET("/caso/:casoId/:rol/", handler.GetCaso)
 	e.GET("/casos", handler.GetCasosUser)
+	e.GET("/caso/from-user-caso/", handler.GetCasosFromUserCaso)
 	e.GET("/casos-all/", handler.GetAllCasosUser)
 	e.POST("/caso/caso-update/",handler.UpdateCaso)
 	
-	e.GET("/caso/asignar-funcionario/:idCaso/:idFuncionario/",handler.AsignarFuncionario)
+	e.GET("/caso/asignar-funcionario/:casoId/:idFuncionario/",handler.AsignarFuncionario)
 	e.POST("/caso/finalizar-caso/",handler.FinalizarCaso)
 
 	e.POST("/caso/reporte-casos-xlsx/",handler.GetReporteCasosXlsx)
+
+	e.POST("/caso/add-user-caso/",handler.AsignarFuncionarioSoporte)
+	e.GET("/caso/usuarios-caso/:casoId/",handler.GetUsuariosCaso)
 	// e.GET("/caso/reporte-casos-pdf/",handler.GetReporteCasosPdf)
 }
 
+
+func (u *CasoHandler) GetUsuariosCaso(c echo.Context) (err error) {
+	// token := c.Request().Header["Authorization"][0]
+	// _, err = _routes.ExtractClaims(token)
+	// if err != nil {
+	// 	return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	// }
+	id := c.Param("casoId")
+	ctx := c.Request().Context()
+	res,err := u.CasoUseCase.GetUsuariosCaso(ctx,id)
+	if err != nil {
+		log.Println(err)
+		return c.JSON(http.StatusBadRequest, model.ResponseError{Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK,res)
+}
+
+func (u *CasoHandler) AsignarFuncionarioSoporte(c echo.Context) (err error) {
+	token := c.Request().Header["Authorization"][0]
+	_, err = _routes.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
+	var data caso.UserCaso
+	err = c.Bind(&data)
+	if err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, model.ResponseError{Message: err.Error()})
+	}
+	// log.Println(data.Detail)
+	ctx := c.Request().Context()
+	err = u.CasoUseCase.AsignarFuncionarioSoporte(ctx,&data)
+	if err != nil {
+		log.Println(err)
+		return c.JSON(http.StatusBadRequest, model.ResponseError{Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK,"Ok")
+}
 // func (u *CasoHandler) GetReporteCasosPdf(c echo.Context)(err error) {
 // 	ctx := c.Request().Context()
 // 	bytes,err := u.CasoUseCase.GetReporteCasos(ctx,model.PDF)
@@ -113,7 +158,7 @@ func (u *CasoHandler) AsignarFuncionario(c echo.Context) (err error) {
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
-	id := c.Param("idCaso")
+	id := c.Param("casoId")
 	idF := c.Param("idFuncionario")
 	ctx := c.Request().Context()
 	err = u.CasoUseCase.AsignarFuncionario(ctx,id,idF)
@@ -140,6 +185,29 @@ func (u *CasoHandler) GetAllCasosUser(c echo.Context) (err error) {
 	response := caso.CasosResponse{
 		Casos:   res,
 		Size:    size,
+		Current: casoQuery.Page,
+	}
+	return c.JSON(http.StatusOK, response)
+}
+
+func (u *CasoHandler) GetCasosFromUserCaso(c echo.Context) (err error) {
+	// page := c.QueryParam("page")
+	token := c.Request().Header["Authorization"][0]
+	claims, err := _routes.ExtractClaims(token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+	}
+	var casoQuery  caso.CasoQuery
+	u.CasoQueries(c,&casoQuery)
+	ctx := c.Request().Context()
+	res, err := u.CasoUseCase.GetCasosFromUserCaso(ctx, claims.UserId, &casoQuery)
+	if err != nil {
+		logrus.Error(err)
+		return c.JSON(http.StatusNotFound, model.ResponseError{Message: err.Error()})
+	}
+	response := caso.CasosResponse{
+		Casos:   res,
+		Size:    10,
 		Current: casoQuery.Page,
 	}
 	return c.JSON(http.StatusOK, response)
@@ -215,14 +283,40 @@ func (u *CasoHandler) CreateCaso(c echo.Context) (err error) {
 func (u *CasoHandler)CasoQueries(c echo.Context,q *caso.CasoQuery){
 	updated, _ := strconv.Atoi(c.QueryParam("updated"))
 	created, _ := strconv.Atoi(c.QueryParam("created"))
+	proyecto := c.QueryParam("proyecto")
+	key := c.QueryParam("key")
 	q.Page, _ = strconv.Atoi(c.QueryParam("page"))
+	log.Println("KEYYY",key)
+
+	switch key{
+	case "undefined":
+		q.Key = ""
+	case "" :
+		q.Key = ""
+	default:
+	    q.Key = fmt.Sprintf(`and c.key = '%s'`,key)
+    }
+
+	log.Println(proyecto)
+	switch proyecto{
+		case "undefined":
+			q.Proyecto = ""
+		case "0" :
+			q.Proyecto = ""
+		case "" :
+			q.Proyecto = ""
+		default:
+		q.Proyecto = fmt.Sprintf(`and c.area = %s`,proyecto)
+	}
 	
+
 	switch model.Order(created) {
 	    case model.ASC:
 			q.Order = "order by created_on ASC"
 		case model.DESC:	
 			q.Order = "order by created_on DESC"
 	}
+		log.Println(q.Order)
 	switch model.Order(updated) {
 	case model.ASC:
 		q.Order = "order by updated_on ASC"

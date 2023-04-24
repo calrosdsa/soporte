@@ -71,6 +71,8 @@ type UserForList struct {
 	// Estado    int        `json:"estado"`
 }
 
+
+
 type UserArea struct {
 	Id     string `json:"id"`
 	Nombre string `json:"nombre"`

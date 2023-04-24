@@ -37,16 +37,16 @@ func NewUserHandler(e *echo.Echo, us user.UserUseCases) {
 	e.POST("user/update-funcionario/", handler.UpdateFuncionario)
 	e.GET("user/funcionario/:funcionarioId/", handler.GetClienteById)
 	e.GET("user/funcionarios/", handler.GetClientes)
-	e.GET("user/clientes-area/:areaId/", handler.GetClientesByArea)
 	e.POST("user/register-invitation/", handler.UserRegisterInvitation)
 	e.GET("user/user-list/", handler.GetUserList)
 	e.GET("user/validate-email/:email/", handler.ValidateEmail)
 	e.GET("user/resend-email/", handler.ResendEmail)
 	e.GET("user/cancel-invitation/", handler.CancelInvitation)
 	e.GET("user/search/", handler.SearchUser)
-	e.GET("user/add-user-list/:areaId/", handler.GetUserFiltered)
-	e.GET("user/users-empresa/:emId/", handler.GetUsersbyEmpresaId)
-	e.GET("user/users-empresa-by-rol/:emId/:rol/", handler.GetUsersEmpresaByRol)
+	// e.GET("user/users-empresa/:emId/", handler.GetUsersbyEmpresaId)
+	e.GET("user/users-empresa/:emId/:rol/", handler.GetUsersEmpresa)
+	// e.GET("user/add-user-list/:areaId/", handler.GetUserFiltered)
+	// e.GET("user/users-proyecto/:areaId/", handler.GetClientesByArea)
 
 	e.GET("user/", handler.GetProfile)
 
@@ -67,7 +67,7 @@ func (u *UserHandler) GetProfile(c echo.Context) (err error) {
 }
 
 
-func (u *UserHandler) GetUsersEmpresaByRol(c echo.Context) (err error) {
+func (u *UserHandler) GetUsersEmpresa(c echo.Context) (err error) {
 	token := c.Request().Header["Authorization"][0]
 	_, err = r.ExtractClaims(token)
 	if err != nil {
@@ -76,43 +76,43 @@ func (u *UserHandler) GetUsersEmpresaByRol(c echo.Context) (err error) {
 	rol, _ := strconv.Atoi(c.Param("rol"))
 	ctx := c.Request().Context()
 	emId, _ := strconv.Atoi(c.Param("emId"))
-	res, err := u.UserUcase.GetUsersEmpresaByRol(ctx, emId, rol)
+	res, err := u.UserUcase.GetUsersEmpresa(ctx, emId, rol)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ResponseError{Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, res)
 }
 
-func (u *UserHandler) GetUsersbyEmpresaId(c echo.Context) (err error) {
-	token := c.Request().Header["Authorization"][0]
-	_, err = r.ExtractClaims(token)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
-	}
-	ctx := c.Request().Context()
-	emId, _ := strconv.Atoi(c.Param("emId"))
-	res, err := u.UserUcase.GetUsersbyEmpresaId(ctx, emId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.ResponseError{Message: err.Error()})
-	}
-	return c.JSON(http.StatusOK, res)
-}
+// func (u *UserHandler) GetUsersbyEmpresaId(c echo.Context) (err error) {
+// 	token := c.Request().Header["Authorization"][0]
+// 	claims, err := r.ExtractClaims(token)
+// 	if err != nil {
+// 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+// 	}
+// 	ctx := c.Request().Context()
+// 	emId, _ := strconv.Atoi(c.Param("emId"))
+// 	res, err := u.UserUcase.GetUsersbyEmpresaId(ctx, emId,claims.Rol)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, model.ResponseError{Message: err.Error()})
+// 	}
+// 	return c.JSON(http.StatusOK, res)
+// }
 
-func (a *UserHandler) GetUserFiltered(c echo.Context) (err error) {
-	token := c.Request().Header["Authorization"][0]
-	areaId := c.Param("areaId")
-	id, _ := strconv.Atoi(areaId)
-	claims, err := r.ExtractClaims(token)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
-	}
-	ctx := c.Request().Context()
-	res, err := a.UserUcase.GetUserAddList(ctx, id, claims.Rol, claims.UserId)
-	if err != nil {
-		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
-	}
-	return c.JSON(http.StatusOK, res)
-}
+// func (a *UserHandler) GetUserFiltered(c echo.Context) (err error) {
+// 	token := c.Request().Header["Authorization"][0]
+// 	areaId := c.Param("areaId")
+// 	id, _ := strconv.Atoi(areaId)
+// 	claims, err := r.ExtractClaims(token)
+// 	if err != nil {
+// 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
+// 	}
+// 	ctx := c.Request().Context()
+// 	res, err := a.UserUcase.GetUserAddList(ctx, id, claims.Rol, claims.UserId)
+// 	if err != nil {
+// 		return c.JSON(model.GetStatusCode(err), model.ResponseError{Message: err.Error()})
+// 	}
+// 	return c.JSON(http.StatusOK, res)
+// }
 
 func (a *UserHandler) SearchUser(c echo.Context) (err error) {
 	token := c.Request().Header["Authorization"][0]
@@ -255,19 +255,19 @@ func (a *UserHandler) UserRegisterInvitation(c echo.Context) (err error) {
 
 }
 
-func (u *UserHandler) GetClientesByArea(c echo.Context) (err error) {
-	idS := c.Param("areaId")
-	id, err := strconv.Atoi(idS)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, model.ResponseError{Message: err.Error()})
-	}
-	ctx := c.Request().Context()
-	res, err := u.UserUcase.GetClientesByArea(ctx, id)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, model.ResponseError{Message: err.Error()})
-	}
-	return c.JSON(http.StatusOK, res)
-}
+// func (u *UserHandler) GetClientesByArea(c echo.Context) (err error) {
+// 	idS := c.Param("areaId")
+// 	id, err := strconv.Atoi(idS)
+// 	if err != nil {
+// 		return c.JSON(http.StatusInternalServerError, model.ResponseError{Message: err.Error()})
+// 	}
+// 	ctx := c.Request().Context()
+// 	res, err := u.UserUcase.GetClientesByArea(ctx, id)
+// 	if err != nil {
+// 		return c.JSON(http.StatusInternalServerError, model.ResponseError{Message: err.Error()})
+// 	}
+// 	return c.JSON(http.StatusOK, res)
+// }
 
 func (u *UserHandler) GetFuncionarioById(c echo.Context) (err error) {
 	id := c.Param("funcionarioId")

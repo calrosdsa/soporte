@@ -31,9 +31,16 @@ CREATE TABLE if not exists casos  (
     superior_id uuid,
     status INT DEFAULT 0,
     rol INT,
+    key VARCHAR NOT NULL,
     PRIMARY KEY (id)
 );
 
+
+CREATE TABLE IF NOT exists usuarios_caso (
+    id serial primary key,
+    caso_id uuid NOT NULL,
+    user_id  uuid NOT NULL
+);
 
 
 
@@ -58,7 +65,6 @@ create table if not exists messages (
     id serial primary key,
     caso_id uuid,
     from_user uuid,
-    to_user uuid,
     media_url  text[],
     content TEXT NOT NULL,
     is_read BOOLEAN DEFAULT false,

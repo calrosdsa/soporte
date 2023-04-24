@@ -6,6 +6,7 @@ import (
 	"log"
 	"soporte-go/core/model"
 	"soporte-go/core/model/caso"
+	"soporte-go/core/model/user"
 	"soporte-go/core/reportes/excel"
 	"soporte-go/core/reportes/pdf"
 	"time"
@@ -25,28 +26,47 @@ func NewCasoUseCase(uc caso.CasoRepository, timeout time.Duration, util model.Ut
 	}
 }
 
-func (uc *casoUseCase) GetReporteCasos(ctx context.Context, t model.FileType,options *caso.CasoReporteOptions) (b bytes.Buffer, err error) {
+func (uc *casoUseCase) GetUsuariosCaso(ctx context.Context, cId string) (res []user.UserForList, err error) {
+	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
+	defer cancel()
+	res, err = uc.casoRepo.GetUsuariosCaso(ctx, cId)
+	return
+}
+
+func (uc *casoUseCase) AsignarFuncionarioSoporte(ctx context.Context, u *caso.UserCaso) (err error) {
+	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
+	defer cancel()
+	for _, id := range u.UserId {
+		err = uc.casoRepo.AsignarFuncionarioSoporte(ctx, u.CasoId, id)
+	}
+	return
+}
+
+func (uc *casoUseCase) GetReporteCasos(ctx context.Context, t model.FileType, options *caso.CasoReporteOptions) (b bytes.Buffer, err error) {
 	var buffer bytes.Buffer
-	casos, err := uc.casoRepo.GetCasosCliForReporte(ctx,options)
-	casos2, err := uc.casoRepo.GetCasosFunForReporte(ctx,options)
+	casos, err := uc.casoRepo.GetCasosCliForReporte(ctx, options)
 	if err != nil {
 		log.Println(err)
-		return 
+	}
+	casos2, err := uc.casoRepo.GetCasosFunForReporte(ctx, options)
+	if err != nil {
+		log.Println(err)
+		return
 	}
 	log.Println(casos)
 	switch t {
-		case model.XLSX:
-			err = excel.ReporteCasosExcel(casos,casos2, &buffer)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-	    case model.PDF:
-			err = pdf.ReporteCasos(casos, &buffer)
-			if err != nil {
-				log.Println(err)
-				return
-			}
+	case model.XLSX:
+		err = excel.ReporteCasosExcel(casos, casos2, &buffer)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	case model.PDF:
+		err = pdf.ReporteCasos(casos, &buffer)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 	}
 	return buffer, err
 }
@@ -65,7 +85,7 @@ func (uc *casoUseCase) AsignarFuncionario(ctx context.Context, id string, idF st
 	return
 }
 
-func (uc *casoUseCase) GetCaso(ctx context.Context, id string,rol int) (res caso.Caso, err error) {
+func (uc *casoUseCase) GetCaso(ctx context.Context, id string, rol int) (res caso.Caso, err error) {
 	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
 	defer cancel()
 	if uc.util.IsClienteRol(rol) {
@@ -73,7 +93,7 @@ func (uc *casoUseCase) GetCaso(ctx context.Context, id string,rol int) (res caso
 		if err != nil {
 			return
 		}
-	}else if uc.util.IsFuncionarioRol(rol){
+	} else if uc.util.IsFuncionarioRol(rol) {
 		res, err = uc.casoRepo.GetCasoFuncionario(ctx, id)
 		if err != nil {
 			return
@@ -127,25 +147,35 @@ func (uc *casoUseCase) GetAllCasosUser(ctx context.Context, id string, query *ca
 	return
 }
 
-func (uc *casoUseCase) UpdateCaso(ctx context.Context,c *caso.Caso) (err error) {
-	ctx,cancel := context.WithTimeout(ctx,uc.contextTimeout)
+func (uc *casoUseCase) GetCasosFromUserCaso(ctx context.Context, id string, q *caso.CasoQuery) (res []caso.Caso, err error) {
+	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
 	defer cancel()
-	err = uc.casoRepo.UpdateCaso(ctx,c)
-	return 
+	page, offset := uc.util.PaginationValues(q.Page, 30)
+	q.Page = page
+	q.PageSize = offset
+	res, err = uc.casoRepo.GetCasosFromUserCaso(ctx, id, q)
+	return
 }
 
-func (uc *casoUseCase) CreateCaso(ctx context.Context, cas *caso.Caso, id string, emI int,rol int) (err error) {
+func (uc *casoUseCase) UpdateCaso(ctx context.Context, c *caso.Caso) (err error) {
+	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
+	defer cancel()
+	err = uc.casoRepo.UpdateCaso(ctx, c)
+	return
+}
+
+func (uc *casoUseCase) CreateCaso(ctx context.Context, cas *caso.Caso, id string, emI int, rol int) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
 	defer cancel()
 	log.Println(rol)
-	if uc.util.IsClienteRol(rol){
-		err = uc.casoRepo.CreateCasoCliente(ctx, cas, id, emI,rol)
+	if uc.util.IsClienteRol(rol) {
+		err = uc.casoRepo.CreateCasoCliente(ctx, cas, id, emI, rol)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-	}else if uc.util.IsFuncionarioRol(rol){
-		err = uc.casoRepo.CreateCasoFuncionario(ctx,cas,id,emI,rol)
+	} else if uc.util.IsFuncionarioRol(rol) {
+		err = uc.casoRepo.CreateCasoFuncionario(ctx, cas, id, emI, rol)
 		if err != nil {
 			return
 		}

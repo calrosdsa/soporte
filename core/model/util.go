@@ -11,6 +11,7 @@ const (
 	ASC = 2
 )
 
+
 const (
 	Pendiente CasoEstado = iota
 	EnEsperaDelFuncionario

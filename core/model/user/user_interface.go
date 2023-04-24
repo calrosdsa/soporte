@@ -15,7 +15,7 @@ type UserRegistrationRequest struct {
 type UserUseCases interface {
 	// CreateCliente(ctx context.Context,user *Cliente ) (res string,err error)
 	UserRegisterInvitation(ctx context.Context, to *UserRegistrationRequest, id string, rol int, empresaId int) ([]UserShortInfo, error)
-	GetClientesByArea(context.Context, int) ([]UserArea, error)
+	// GetProyectoUsers(context.Context, int) ([]UserForList, error)
 	UpdateCliente(ctx context.Context, columns []string, values ...interface{}) error
 	UpdateFuncionario(ctx context.Context, columns []string, values ...interface{}) error
 	GetUserById(ctx context.Context, id string, rol int) (UserDetail, error)
@@ -28,12 +28,12 @@ type UserUseCases interface {
 	ValidateEmail(ctx context.Context, email string) error
 	ReSendEmail(m []string, url string)
 	DeleteInvitation(ctx context.Context, m string) (err error)
-	GetUserAddList(ctx context.Context, f int, rol int, sId string) ([]UserArea, error)
+	// GetUserAddList(ctx context.Context, f int, rol int, sId string) ([]UserForList, error)
 	SearchUser(ctx context.Context, id string, q string) ([]UserShortInfo, error)
 
-	GetUsersbyEmpresaId(ctx context.Context, emId int) ([]UserForList, error)
+	GetUsersEmpresa(ctx context.Context, emId int,rol int) ([]UserForList, error)
 
-	GetUsersEmpresaByRol(ctx context.Context, emId int, rol int) ([]UserForList, error)
+	// GetUsersEmpresaByRol(ctx context.Context, emId int, rol int) ([]UserForList, error)
 
 	// GetUsersEmpresa(ctx context.Context, emId int,rol int) ([]UserForList, error)
 }
@@ -53,8 +53,8 @@ type UserRepository interface {
 
 	
 	GetClientesEmpresaByRol(ctx context.Context, emId int, rol int) ([]UserShortInfo, error)
-	GetUserAddList(ctx context.Context, f int, rol int, sId string) ([]UserArea, error)
-	GetClientesByArea(context.Context, int) ([]UserArea, error)
+	// GetUserAddList(ctx context.Context, f int, rol int, sId string) ([]UserForList, error)
+	// GetProyectoUsers(context.Context, int) ([]UserForList, error)
 	UpdateCliente(ctx context.Context, columns []string, values ...interface{}) error
 	UpdateFuncionario(ctx context.Context, columns []string, values ...interface{}) error
 	
@@ -66,5 +66,6 @@ type UserRepository interface {
 	SearchUser(ctx context.Context, id string, q string) ([]UserShortInfo, error)
 	
 	GetClientesEmpresa(ctx context.Context, emId int) ([]UserForList, error)
+
 	GetFuncionariosEmpresa(ctx context.Context, emId int) ([]UserForList, error)
 }

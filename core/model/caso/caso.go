@@ -4,15 +4,20 @@ import (
 	"bytes"
 	"context"
 	"soporte-go/core/model"
+	"soporte-go/core/model/user"
+
+	// "soporte-go/core/model/user"
 	"time"
 )
 
 type CasoQuery struct {
-	Page      int    `json:"page"`
-	PageSize  int    `json:"page_size"`
-	Estado    string `json:"estado"`
-	Prioridad string `json:"prioridad"`
-	Order     string `json:"order"`
+	Page     int    `json:"page"`
+	PageSize int    `json:"page_size"`
+	Estado   string `json:"estado"`
+	// Prioridad string `json:"prioridad"`
+	Order    string `json:"order"`
+	Proyecto string `json:"proyecto"`
+	Key      string `json:"key"`
 }
 
 type CasosResponse struct {
@@ -33,6 +38,11 @@ type CasoReporteOptions struct {
 	Estados   []int   `json:"estados"`
 	Areas     []int   `json:"areas"`
 	//    Empresa int `json:"empresa"`
+}
+
+type UserCaso struct {
+	CasoId string   `json:"caso_id"`
+	UserId []string `json:"user_ids"`
 }
 
 type Caso struct {
@@ -58,6 +68,8 @@ type Caso struct {
 	FuncionarioApellido    *string    `json:"funcionario_apellido,omitempty"`
 	Rol                    *int       `json:"rol"`
 	ProyectoName           *string    `json:"proyecto_name"`
+	Key                    string     `json:"key"`
+	// UsuariosCaso          []user.UserForList `json:"users"`
 }
 
 type CasoRepository interface {
@@ -69,11 +81,13 @@ type CasoRepository interface {
 	GetCasosCountbySuperiorId(ctx context.Context, id string) (int, error)
 	GetCasosCount(ctx context.Context) (int, error)
 
-	GetCasosFuncionario(ctx context.Context, id string, query *CasoQuery) ([]Caso, error)
-	GetCasosCliente(ctx context.Context, id string, query *CasoQuery) ([]Caso, error)
+	GetCasosFuncionario(ctx context.Context, id string, q *CasoQuery) ([]Caso, error)
+	GetCasosCliente(ctx context.Context, id string, q *CasoQuery) ([]Caso, error)
 
-	GetAllCasosUserFuncionario(ctx context.Context, id int, query *CasoQuery) ([]Caso, error)
-	GetAllCasosUserCliente(ctx context.Context, id string, query *CasoQuery) ([]Caso, error)
+	GetCasosFromUserCaso(ctx context.Context, id string, q *CasoQuery) ([]Caso, error)
+
+	GetAllCasosUserFuncionario(ctx context.Context, id int, q *CasoQuery) ([]Caso, error)
+	GetAllCasosUserCliente(ctx context.Context, id string, q *CasoQuery) ([]Caso, error)
 	UpdateCaso(ctx context.Context, c *Caso) error
 	AsignarFuncionario(ctx context.Context, id string, idF string) error
 	FinalizarCaso(ctx context.Context, fD *FinalizacionDetail) error
@@ -83,17 +97,27 @@ type CasoRepository interface {
 
 	CreateCasoCliente(ctx context.Context, cas *Caso, id string, emI int, rol int) (err error)
 	CreateCasoFuncionario(ctx context.Context, cas *Caso, id string, emI int, rol int) (err error)
+
+	AsignarFuncionarioSoporte(ctx context.Context, id string, uId string) (err error)
+	GetUsuariosCaso(ctx context.Context, cId string) (res []user.UserForList, err error)
 }
 
 type CasoUseCase interface {
 	GetCaso(ctx context.Context, id string, rol int) (res Caso, err error)
-	GetCasosUser(ctx context.Context, id string, query *CasoQuery, rol int) (casos []Caso, size int, err error)
-	GetAllCasosUser(ctx context.Context, id string, query *CasoQuery, rol int) ([]Caso, int, error)
+	GetCasosUser(ctx context.Context, id string, q *CasoQuery, rol int) (casos []Caso, size int, err error)
+	GetAllCasosUser(ctx context.Context, id string, q *CasoQuery, rol int) ([]Caso, int, error)
 	CreateCaso(ctx context.Context, caso *Caso, id string, emI int, rol int) (err error)
 	UpdateCaso(ctx context.Context, c *Caso) error
-	AsignarFuncionario(ctx context.Context, id string, idF string) error
-	FinalizarCaso(ctx context.Context, fD *FinalizacionDetail) error
 
+	AsignarFuncionario(ctx context.Context, id string, idF string) error
+	AsignarFuncionarioSoporte(ctx context.Context, u *UserCaso) (err error)
+
+	FinalizarCaso(ctx context.Context, fD *FinalizacionDetail) error
 	GetReporteCasos(ctx context.Context, t model.FileType, options *CasoReporteOptions) (b bytes.Buffer, err error)
+
+	GetUsuariosCaso(ctx context.Context, cId string) (res []user.UserForList, err error)
+
+	GetCasosFromUserCaso(ctx context.Context, id string, q *CasoQuery) ([]Caso, error)
+
 	// CerrarCaso(ctx context.Context,id string)(error)
 }

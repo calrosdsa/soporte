@@ -158,15 +158,6 @@ func (p *pgUserRepository) GetInvitaciones(ctx context.Context, id string) (res 
 
 
 
-func (p *pgUserRepository) GetClientesByArea(ctx context.Context, id int) (res []user.UserArea, err error) {
-	query := `select user_id,nombre_user,estado from user_area where area_id =$1;`
-	res, err = p.fetchUserArea(ctx, query, id)
-	if err != nil {
-		return res, err
-	}
-	return
-}
-
 func filter[T any](ss []T, test func(T) bool) (ret []T) {
     for _, s := range ss {
         if test(s) {
@@ -176,7 +167,7 @@ func filter[T any](ss []T, test func(T) bool) (ret []T) {
     return
 }
 
-func (p *pgUserRepository) GetUserAddList(ctx context.Context, f int,rol int,sId string) (res []user.UserArea, err error) {
+func (p *pgUserRepository) GetUserAddList(ctx context.Context, f int,rol int,sId string) (res []user.UserForList, err error) {
 	// log.Println(f)
 	var query string
 	query = `select user_id,nombre_user,estado from user_area where area_id = $1;`
@@ -197,7 +188,7 @@ func (p *pgUserRepository) GetUserAddList(ctx context.Context, f int,rol int,sId
 		for _, val2 := range res2 {
 				if val2.Id == res[i].Id {
 					users[i] = users[len(users)-1] // Copy last element to index i.
-					users[len(users)-1] = user.UserArea{}   // Erase last element (write zero value).
+					users[len(users)-1] = user.UserForList{}   // Erase last element (write zero value).
 					users = users[:len(users)-1]   // Truncate slice.
 				}
 			}
@@ -472,7 +463,7 @@ func (p *pgUserRepository) fetchUsersForList(ctx context.Context, query string, 
 	return result, nil
 }
 
-func (p *pgUserRepository) fetchUserArea(ctx context.Context, query string, args ...interface{}) (result []user.UserArea, err error) {
+func (p *pgUserRepository) fetchUserArea(ctx context.Context, query string, args ...interface{}) (result []user.UserForList, err error) {
 	rows, err := p.Conn.QueryContext(p.Context, query, args...)
 	if err != nil {
 		logrus.Error(err)
@@ -481,13 +472,14 @@ func (p *pgUserRepository) fetchUserArea(ctx context.Context, query string, args
 	defer func() {
 		rows.Close()
 	}()
-	result = make([]user.UserArea, 0)
+	result = make([]user.UserForList, 0)
 	for rows.Next() {
-		t := user.UserArea{}
+		t := user.UserForList{}
 		err = rows.Scan(
 			&t.Id,
 			&t.Nombre,
-			&t.Estado,
+			&t.Apellido,
+			&t.Photo,	
 		)
 		result = append(result, t)
 		if err != nil {

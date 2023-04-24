@@ -103,14 +103,14 @@ func (uc *empresaUseCase) GetFuncionariosByAreaId(ctx context.Context, areaId in
 func (uc *empresaUseCase) GetAreasFromUser(ctx context.Context, userId string, emId int, rol int) (res []empresa.Area, err error) {
 	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
 	defer cancel()
-	if uc.util.IsClienteAdmin(rol) {
-		res, err = uc.empresaRepo.GetAreasClienteAdmin(ctx, userId)
-		return
-	} else if uc.util.IsFuncionarioRol(rol) {
+	if uc.util.IsFuncionarioAdmin(rol) {
 		res, err = uc.empresaRepo.GetProyectosFuncionario(ctx, userId)
 		return
+	} else {
+		res, err = uc.empresaRepo.GetProyectoFromUserArea(ctx, userId)
+		return
 	}
-	return res, model.ErrConflict
+	// return res, model.ErrConflict
 }
 
 func (uc *empresaUseCase) StoreEmpresa(ctx context.Context, empresa *empresa.Empresa) (err error) {

@@ -47,19 +47,14 @@ func NewUserUseCases(u user.UserRepository, timeout time.Duration, g *gomail.Dia
 // 	return
 // }
 
-func (a *userUseCase) GetUsersbyEmpresaId(ctx context.Context,emId int) (res []user.UserForList,err error) {
-	ctx, cancel := context.WithTimeout(ctx,a.contextTimeout)
-	defer cancel()
-	res,err = a.userRepo.GetClientesEmpresa(ctx,emId)
-	return
-}
 
-func (a *userUseCase) GetUsersEmpresaByRol(ctx context.Context,emId int,rol int) (res []user.UserForList,err error) {
+
+func (a *userUseCase) GetUsersEmpresa(ctx context.Context,emId int,rol int) (res []user.UserForList,err error) {
 	ctx,cancel := context.WithTimeout(ctx,a.contextTimeout)
 	defer cancel()
-	if a.util.IsClienteAdmin(rol){
+	if a.util.IsClienteRol(rol){
 		res,err = a.userRepo.GetClientesEmpresa(ctx,emId)
-	} else if a.util.IsFuncionarioAdmin(rol) {
+	} else if a.util.IsFuncionarioRol(rol) {
 		res,err = a.userRepo.GetFuncionariosEmpresa(ctx,emId)
 	}
 	return
@@ -191,17 +186,17 @@ func (u *userUseCase) GetUsersShortIInfo(ctx context.Context, id string, rol int
 	return
 }
 
-func (u *userUseCase) GetClientesByArea(ctx context.Context, id int) (res []user.UserArea, err error) {
-	res, err = u.userRepo.GetClientesByArea(ctx, id)
-	return
-}
+// func (u *userUseCase) GetClientesByArea(ctx context.Context, id int) (res []user.UserForList, err error) {
+// 	res, err = u.userRepo.GetClientesByArea(ctx, id)
+// 	return
+// }
 
-func (u *userUseCase) GetUserAddList(ctx context.Context, f int, rol int, sId string) (res []user.UserArea, err error) {
-	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
-	defer cancel()
-	res, err = u.userRepo.GetUserAddList(ctx, f, rol, sId)
-	return
-}
+// func (u *userUseCase) GetUserAddList(ctx context.Context, f int, rol int, sId string) (res []user.UserForList, err error) {
+// 	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
+// 	defer cancel()
+// 	res, err = u.userRepo.GetUserAddList(ctx, f, rol, sId)
+// 	return
+// }
 
 func (u *userUseCase) GetFuncionarios(ctx context.Context) ([]user.Funcionario, error) {
 	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)

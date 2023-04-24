@@ -113,7 +113,7 @@ func (p *pgEmpresaRepository) GetFuncionariosByAreaId(ctx context.Context, areaI
 	return
 }
 
-func (p *pgEmpresaRepository) GetAreasClienteAdmin(ctx context.Context, id string) (res []empresa.Area, err error) {
+func (p *pgEmpresaRepository) GetProyectoFromUserArea(ctx context.Context, id string) (res []empresa.Area, err error) {
 	query := `select area_id,nombre_area,estado,(0),created_on,user_id from user_area where user_id = $1`
 	res, err = p.fetchAreas(ctx, query, id)
 	if err != nil {

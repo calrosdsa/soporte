@@ -45,7 +45,7 @@ type EmpresaRepository interface {
 	StoreEmpresa(ctx context.Context, empresa *Empresa) (err error)
 	GetAreasUser(ctx context.Context, userId string) (res []AreaUser, err error)
 
-	GetAreasClienteAdmin(ctx context.Context, id string) (res []Area, err error)
+	GetProyectoFromUserArea(ctx context.Context, id string) (res []Area, err error)
 	GetProyectosFuncionario(ctx context.Context, id string) (res []Area, err error)
 	GetProyectosAdmin(ctx context.Context, id int) (res []Area, err error)
 

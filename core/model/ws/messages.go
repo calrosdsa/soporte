@@ -8,7 +8,7 @@ import (
 type Message struct {
 	Id              int    `json:"id"`
 	FromUser       string `json:"from_user"`
-	ToUser   string `json:"to_user"`
+	// ToUser   string `json:"to_user"`
 	CasoId          string `json:"caso_id"`
 	MediaUrl        []string `json:"media_url"`
 	Content         string `json:"content"`
@@ -19,7 +19,7 @@ type Message struct {
 
 type MessageData struct {
 	FromUser       string  `json:"from_user"`
-	ToUser   string  `json:"to_user"`
+	// ToUser   string  `json:"to_user"`
 	CasoId          string  `json:"caso_id"`
 	MediaUrl        []string `json:"media_url"`
 	Content         string  `json:"content"`
