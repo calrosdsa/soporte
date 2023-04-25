@@ -40,14 +40,8 @@ func NewCasoHandler(e *echo.Echo, uc caso.CasoUseCase) {
 	e.POST("/caso/reporte-caso-html/", handler.GetReporteHtml)
 
 	e.POST("/caso/add-user-caso/", handler.AsignarFuncionarioSoporte)
-	e.POST("/caso/usuarios-caso/:casoId/", handler.GetUsuariosCaso)
+	e.GET("/caso/usuarios-caso/:casoId/", handler.GetUsuariosCaso)
 	// e.GET("/caso/reporte-casos-pdf/",handler.GetReporteCasosPdf)
-}
-
-type User struct {
-	Name  string
-	Age   int
-	Email string
 }
 
 func (u *CasoHandler) GetReporteHtml(c echo.Context) (err error) {
@@ -84,7 +78,7 @@ func (u *CasoHandler) GetUsuariosCaso(c echo.Context) (err error) {
 		return c.JSON(http.StatusUnauthorized, model.ResponseError{Message: err.Error()})
 	}
 	id := c.Param("casoId")
-	ctx := c.Request().Context()
+	ctx := c.Request().Context()	
 	res, err := u.CasoUseCase.GetUsuariosCaso(ctx, id)
 	if err != nil {
 		log.Println(err)
