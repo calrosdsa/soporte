@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	initApp "soporte-go/api"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -40,6 +41,11 @@ const (
 )
 
 func main() {
+	loc, err := time.LoadLocation("America/La_Paz")
+	if err != nil {
+		log.Println(loc)
+	}
+    time.Local = loc
 	// SmtpEmial()
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
