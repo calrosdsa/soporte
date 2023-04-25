@@ -14,6 +14,7 @@ import (
 	"soporte-go/core/model"
 	"soporte-go/core/model/caso"
 	"soporte-go/core/model/user"
+	"soporte-go/core/model/ws"
 
 	// "github.com/jackc/pgx/v5/pgxpool"
 	// "github.com/aws/aws-sdk-go/private/protocol/query"
@@ -415,6 +416,51 @@ func (p *pgCasoRepository) CreateCasoFuncionario(ctx context.Context, cas *caso.
 		}
 	}
 	return
+}
+
+
+func (p *pgCasoRepository) GetMessagesCaso(ctx context.Context, casoId string) (res []ws.Message, err error) {
+	query := `select m.id,m.caso_id,m.from_user,m.media_url,m.content,m.is_read,m.created_on,m.is_deleted,
+	coalesce(cl.nombre,f.nombre) as nombre,
+	coalesce(cl.apellido,f.apellido) as apellido
+	from messages as m left join funcionarios as f on f.funcionario_id = from_user
+	left join clientes as cl on cl.client_id = from_user
+	where caso_id = $1;`
+	res, err = p.fetchMessages(ctx, query, casoId)
+
+	return
+}
+func (p *pgCasoRepository) fetchMessages(ctx context.Context, query string, args ...interface{}) (result []ws.Message, err error) {
+	rows, err := p.Conn.QueryContext(p.Context, query, args...)
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+	defer func() {
+		rows.Close()
+	}()
+	result = make([]ws.Message, 0)
+	for rows.Next() {
+		t := ws.Message{}
+		err = rows.Scan(
+			&t.Id,
+			&t.CasoId,
+			&t.FromUser,
+			pq.Array(&t.MediaUrl),
+			&t.Content,
+			&t.IsRead,
+			&t.CreatedOn,
+			&t.IsDeleted,
+			&t.Nombre,
+			&t.Apellido,
+		)
+		result = append(result, t)
+		if err != nil {
+			logrus.Error(err)
+			return nil, err
+		}
+	}
+	return result, nil
 }
 
 func (p *pgCasoRepository) fetchCasosWithClient(ctx context.Context, query string, args ...interface{}) (result []caso.Caso, err error) {

@@ -5,15 +5,19 @@ import (
 	"html/template"
 	"log"
 	"soporte-go/core/model/caso"
+	"soporte-go/core/model/user"
+	"soporte-go/core/model/ws"
 )
 
-type User struct {
-	Name  string
-	Age   int
-	Email string
+
+
+type CasoReporte struct {
+	Caso         caso.Caso
+	UsuariosCaso []user.UserForList
+	Messages []ws.Message
 }
 
-func HtmlCasoReporte(buf *bytes.Buffer, c caso.Caso) {
+func HtmlCasoReporte(buf *bytes.Buffer, c caso.Caso, u []user.UserForList,m []ws.Message) {
 	// users := []User{
 	// 	{Name: "John Smith", Age: 35, Email: "john@example.com"},
 	// 	{Name: "Jane Doe", Age: 27, Email: "jane@example.com"},
@@ -25,10 +29,16 @@ func HtmlCasoReporte(buf *bytes.Buffer, c caso.Caso) {
 	if err != nil {
 		log.Println(tmpl)
 	}
+	data := CasoReporte{
+		Caso:         c,
+		UsuariosCaso: u,
+		Messages: m,
+	}
+
 	// execute the HTML template with the data
-	err = tmpl.Execute(buf, c)
-	if err != nil{
-		log.Println(err)
+	err = tmpl.Execute(buf, data)
+	if err != nil {
+		log.Println("ERROR ------------", err)
 	}
 
 	// if err != nil {

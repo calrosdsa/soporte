@@ -27,12 +27,6 @@ func NewWsRepository(conn *sql.DB, ctx context.Context) ws.WsRepository {
 	}
 }
 
-func (p *wsRepository) GetMessages(ctx context.Context, casoId string) (res []ws.Message, err error) {
-	query := `select * from messages where caso_id = $1;`
-	res, err = p.fetchMessages(ctx, query, casoId)
-
-	return
-}
 
 func (p *wsRepository) SaveMessage(ctx context.Context, m *ws.MessageData) (res ws.Message, err error) {
 	var message ws.Message
@@ -64,6 +58,12 @@ func (p *wsRepository) SaveMessage(ctx context.Context, m *ws.MessageData) (res 
 	return
 }
 
+func (p *wsRepository) GetMessages(ctx context.Context, casoId string) (res []ws.Message, err error) {
+	query := `select id,caso_id,from_user,media_url,content,is_read,created_on,is_deleted from messages where caso_id = $1;`
+	res, err = p.fetchMessages(ctx, query, casoId)
+
+	return
+}
 func (p *wsRepository) fetchMessages(ctx context.Context, query string, args ...interface{}) (result []ws.Message, err error) {
 	rows, err := p.Conn.QueryContext(p.Context, query, args...)
 	if err != nil {

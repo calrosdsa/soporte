@@ -50,7 +50,7 @@ func InitServer(db *pgxpool.Pool, db2 *sql.DB, ctx context.Context, sess *sessio
 		AllowMethods: []string{"*"},
 	}))
 	e.Use(middleware.Recover())
-	e.Use(middleware.Logger())
+	// e.Use(middleware.Logger())
 	mUser := "jmiranda@teclu.com"
 	mPass := "jmiranda2022"
 	mHost := "mail.teclu.com"
@@ -70,7 +70,6 @@ func InitServer(db *pgxpool.Pool, db2 *sql.DB, ctx context.Context, sess *sessio
 
 	//caso
 	casoRepository := _r_caso.NewPgCasoRepository(db2, ctx)
-
 	casoUseCase := _uCase.NewCasoUseCase(casoRepository, timeoutContext, util)
 	_caso.NewCasoHandler(e, casoUseCase)
 

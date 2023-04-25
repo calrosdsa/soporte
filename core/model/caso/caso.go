@@ -5,6 +5,9 @@ import (
 	"context"
 	"soporte-go/core/model"
 	"soporte-go/core/model/user"
+	"soporte-go/core/model/ws"
+
+	// "soporte-go/core/model/ws"
 
 	// "soporte-go/core/model/user"
 	"time"
@@ -44,6 +47,7 @@ type UserCaso struct {
 	CasoId string   `json:"caso_id"`
 	UserId []string `json:"user_ids"`
 }
+
 
 type Caso struct {
 	Id                     string     `json:"id"`
@@ -100,6 +104,8 @@ type CasoRepository interface {
 
 	AsignarFuncionarioSoporte(ctx context.Context, id string, uId string) (err error)
 	GetUsuariosCaso(ctx context.Context, cId string) (res []user.UserForList, err error)
+
+	GetMessagesCaso(ctx context.Context,id string)(res []ws.Message,err error)
 }
 
 type CasoUseCase interface {
@@ -121,5 +127,6 @@ type CasoUseCase interface {
 	GetReporteCasos(ctx context.Context, t model.FileType, options *CasoReporteOptions) (b bytes.Buffer, err error)
 	GetReporteCaso(ctx context.Context, t model.FileType,c Caso) (b bytes.Buffer, err error)
 
+	// GetMessagesCaso(ctx context.Context,id string)(res []ws.Message,err error)
 	// CerrarCaso(ctx context.Context,id string)(error)
 }

@@ -3,23 +3,147 @@
   <head>
     <meta charset="UTF-8">
     <title>User Profiles</title>
+    <style>
+      body{
+        margin: 0;
+        
+      }
+      .content1{
+        width: 60%;
+        overflow: auto;
+        height: 100vh;
+        /* padding: 10px; */
+        /* display: grid; */
+        gap: 20px;
+        background-color: whitesmoke;
+      }
+      .content2{
+        width: 40%;
+        overflow: auto;
+        height: 100vh;
+        /* background-color: white; */
+      }
+      .content{
+        display: flex;
+      }
+
+      .detailContent {
+        background-color: white;
+        margin: 10px;
+        /* display: grid; */
+      }
+
+      .dato {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        padding: 15px;
+        border-bottom: 1px solid rgb(226, 226, 226);
+      }
+
+      .label{
+        font-weight: 600;
+      }
+
+      .content{
+        min-width: 200px;
+      }
+
+    </style>
   </head>
   <body>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Age</th>
-          <th>Email</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>{{ .Titulo }}</td>
-          <td>{{ .Descripcion }}</td>
-          <td>{{ .CreatedOn }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </body>
+    <div class="content">
+      <div class="content1">    
+        <div style="background-color: white;padding: 10px;margin: 10px; box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.1),
+         0 4px 4px 0 rgba(0, 0, 0, 0.1);border-radius: 10px;">
+         <h3>Caso #{{ .Caso.Key }}</h3>
+          <h3>{{ .Caso.Titulo}}</h3>
+          <p>{{ .Caso.Descripcion}}</p>
+        </div>
+
+        <div class="detailContent" >
+          <div style="background-color: rgb(227, 227, 227);padding: 1px 10px;">
+            <h3>Detalles del Caso</h3>
+          </div> 
+          <div style="display: grid;grid-template-columns: repeat(2, minmax(0, 1fr));padding: 10px;">
+
+            
+            <div class="dato">
+              <span class="label">Fecha de Creacion</span>
+              <span class='content'>{{ .Caso.CreatedOn}}</span>
+            </div>
+           
+            <div class="dato">
+              <span class="label">F. de Inicio</span>
+              <span class='content'>{{ .Caso.FechaInicio}}</span>
+            </div>
+
+
+            <div class="dato">
+              <span class="label">Ult. Actualizacion</span>
+              <span class='content'>{{ .Caso.UpdatedOn}}</span>
+            </div>
+            <div class="dato">
+              <span class="label">Proyecto</span>
+              <span class='content'>{{ .Caso.ProyectoName }}</span>
+            </div>
+           
+            <!-- <div class="dato">
+              <span class="label">Prioridad</span>
+              <span class='content'>{{ .Caso.Prioridad}}</span>
+            </div> -->
+
+           
+           
+            <div class="dato">
+              <span class="label">Finalizado</span>
+              <span class='content'>{{ .Caso.FechaFin}}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detailContent" >
+          <div style="background-color: rgb(227, 227, 227);padding: 1px 10px;">
+            <h3>Usuarios Caso</h3>
+          </div> 
+          <div style="display: grid;grid-template-columns: repeat(2, minmax(0, 1fr));padding: 10px;">
+            <div class="dato">
+              <span class="label">Author</span>
+              <span class='content'>{{ .Caso.ClienteName }} {{ .Caso.ClienteApellido}}</span>
+            </div>
+            <div class="dato">
+              <span class="label">Usuario Soporte</span>
+              <span class='content'>{{ .Caso.FuncionarioName }} {{ .Caso.FuncionarioApellido }}</span>
+            </div>
+          </div>
+          <h3 style="padding: 1px 10px;">Usuarios Asignados al Caso</h3>
+          <div style=" max-width: 36rem;margin: auto;margin-top: 16px;display: grid;">
+            {{ range .UsuariosCaso }}
+            <span style=" padding: 15px;border-bottom: 1px solid rgb(226, 226, 226);">{{ .Nombre }} {{ .Apellido }}</span>
+            {{ end }}
+            
+          </div>
+        </div>
+
+  </div>
+  
+  <div class="content2">
+    <div style="display: grid;gap: 10px;width: 60%;padding: 5px;">
+      {{ range .Messages }}
+      <div style="display: grid;background-color: rgb(84, 84, 255);color: white; padding: 10px;">
+        <span style="font-size: 12px;margin-bottom: 3px;">{{ .Nombre}} {{ .Apellido}}</span>
+        {{ range .MediaUrl }}
+          <span>
+            <img src='{{ . }}' style="height: 240px;width: 100%;object-fit: cover;" alt="">
+            <!-- {{ . }} -->
+          </span>
+        {{ end }}
+        <span style="font-size: 15px;padding: 6px;">{{ .Content }}</span>
+        <span style="font-size: 11px;">{{ .CreatedOn}}</span>
+      </div>
+      {{ end }}
+    </div>
+  </div>
+
+</div>
+</body>
 </html>

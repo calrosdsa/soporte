@@ -43,13 +43,23 @@ func (uc *casoUseCase) AsignarFuncionarioSoporte(ctx context.Context, u *caso.Us
 	return
 }
 
-func (uc *casoUseCase) GetReporteCaso(ctx context.Context, t model.FileType,c caso.Caso) (b bytes.Buffer, err error) {
+func (uc *casoUseCase) GetReporteCaso(ctx context.Context, t model.FileType, c caso.Caso) (b bytes.Buffer, err error) {
 	var buffer bytes.Buffer
+	res, err := uc.casoRepo.GetUsuariosCaso(ctx, c.Id)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println(res)
+	ms, err := uc.casoRepo.GetMessagesCaso(ctx, c.Id)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println(ms)
 	switch t {
 	case model.HTML:
-		html.HtmlCasoReporte(&buffer,c)
+		html.HtmlCasoReporte(&buffer, c, res, ms)
 	}
-	
+
 	return buffer, err
 }
 
@@ -79,7 +89,7 @@ func (uc *casoUseCase) GetReporteCasos(ctx context.Context, t model.FileType, op
 			return
 		}
 	}
-	
+
 	return buffer, err
 }
 
