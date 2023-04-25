@@ -19,7 +19,9 @@ func HtmlCasoReporte(buf *bytes.Buffer, c caso.Caso) {
 	// 	{Name: "Jane Doe", Age: 27, Email: "jane@example.com"},
 	// 	{Name: "Bob Johnson", Age: 42, Email: "bob@example.com"},
 	// }
-	tmpl, err := template.ParseFiles("template.html")
+	// tmpl, err := template.ParseFiles("template.html")
+	tmpl, err := template.ParseFiles("/home/rootuser/soporte/app/template.html")
+
 	if err != nil {
 		log.Println(tmpl)
 	}
