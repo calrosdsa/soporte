@@ -44,13 +44,13 @@ func InitServer(db *pgxpool.Pool, db2 *sql.DB, ctx context.Context, sess *sessio
 	log.Println("init server....`")
 	// middl := InitMiddleware()
 	// e.Use(middl.CORS)
-	// e.Use(middleware.Logger())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowHeaders: []string{"*"},
 		AllowMethods: []string{"*"},
 	}))
-	// e.Use(middleware.Recover())
+	e.Use(middleware.Recover())
+	e.Use(middleware.Logger())
 	mUser := "jmiranda@teclu.com"
 	mPass := "jmiranda2022"
 	mHost := "mail.teclu.com"
