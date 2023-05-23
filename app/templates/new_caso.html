@@ -142,17 +142,22 @@
                   <tbody>
                     <tr>
                       <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family:Montserrat;font-size:22px;font-weight:700;line-height:1;text-align:left;color:#062E47;">Registrarse en </div>
+                        <div style="font-family:Montserrat;font-size:22px;font-weight:700;line-height:1;text-align:left;color:#062E47;">
+                        Se ha creado un nuevo caso en el area de {{.AREA}}</div>
                       </td>
                     </tr>
                     <tr>
                       <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family:Open Sans;font-size:13px;line-height:170%;text-align:left;color:#062E47;"> If you did not authorize this, you may simply ignore this email</div>
+                        <div style="font-family:Open Sans;font-size:13px;line-height:170%;text-align:left;color:#062E47;">Si no autorizas este email, puedes simplemente ignorarlo</div>
                       </td>
                     </tr>
                     <tr>
                       <td align="left" style="font-size:0px;padding:10px 25px;padding-bottom:20px;word-break:break-word;">
-                        <div style="font-family:Open Sans;font-size:13px;line-height:170%;text-align:left;color:#062E47;"> To continue with your password reset, simply click the button below, and you will be able to change your password. This link will expire in  hours.</div>
+                        <div style="font-family:Open Sans;font-size:13px;line-height:170%;text-align:left;color:#062E47;"> 
+                          El usuario {{.USUARIO}} que pertenece a la entidad de {{.ENTIDAD}} ha creado un caso en el area de {{.AREA}}.
+                        <br/>
+                        Porfavor asigne el caso a un funcionario.
+                        </div>
                       </td>
                     </tr>
                     <tr>
@@ -161,24 +166,16 @@
                           <tbody>
                             <tr>
                               <td align="center" bgcolor="#198DD6" role="presentation" style="border:none;border-radius:4px;cursor:auto;mso-padding-alt:12px 30px;background:#198DD6;" valign="middle">
-                                <a href="{{.URL}}" style="display:inline-block;background:#198DD6;color:#ffffff;font-family:Open Sans;font-size:15px;font-weight:600;line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:12px 30px;mso-padding-alt:0px;border-radius:4px;" target="_blank">
-                                   reset121 </a>
+                                <a href="{{.URL}}" style="display:inline-block;background:#198DD6;color:#ffffff;font-family:Open Sans;font-size:15px;font-weight:600;line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:12px 30px;mso-padding-alt:0px;border-radius:4px;"
+                                 target="_blank">Ver caso</a>
                               </td>
                             </tr>
                           </tbody>
                         </table>
                       </td>
                     </tr>
-                    <tr>
-                      <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family:Open Sans;font-size:12px;line-height:1;text-align:left;color:#828A95;">{{.URL}}</div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family:Open Sans;font-size:13px;line-height:170%;text-align:left;color:#062E47;">Baserow is an open source no-code database tool which allows you to collaborate on projects, customers and more. It gives you the powers of a developer without leaving your browser.</div>
-                      </td>
-                    </tr>
+                  
+                   
                   </tbody>
                 </table>
               </div>

@@ -156,17 +156,6 @@ func (p *pgUserRepository) GetInvitaciones(ctx context.Context, id string) (res 
 	return
 }
 
-
-
-func filter[T any](ss []T, test func(T) bool) (ret []T) {
-    for _, s := range ss {
-        if test(s) {
-            ret = append(ret, s)
-        }
-    }
-    return
-}
-
 func (p *pgUserRepository) GetUserAddList(ctx context.Context, f int,rol int,sId string) (res []user.UserForList, err error) {
 	// log.Println(f)
 	var query string

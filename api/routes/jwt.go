@@ -25,7 +25,39 @@ type ClaimsInvitation struct {
 	jwt.RegisteredClaims
 }
 
+type CliamsEmail struct {
+	Email string `json:"email"`
+	jwt.RegisteredClaims
+}
+
 var sampleSecretKey = []byte(viper.GetString("JWT_SECRET"))
+
+func GenerateEmailJWT(email string) (string, error) {
+	claims := &CliamsEmail{
+		Email:     email,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(sampleSecretKey)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+func ExtractClaimsEmail(tokenString string) (*CliamsEmail, error) {
+	claims := &CliamsEmail{}
+	_, err := jwt.ParseWithClaims(tokenString, claims, func(tokenKey *jwt.Token) (interface{}, error) {
+		return sampleSecretKey, nil
+	})
+	if err != nil {
+		return claims, err
+	}
+	return claims, err
+}
 
 func GenerateInvitationJWT(id string, rol int, empresaId int, email string) (string, error) {
 	claims := &ClaimsInvitation{

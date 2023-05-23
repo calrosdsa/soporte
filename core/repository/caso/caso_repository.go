@@ -105,12 +105,14 @@ func (p *pgCasoRepository) AsignarFuncionarioSoporte(ctx context.Context, id str
 
 }
 
-func (p *pgCasoRepository) AsignarFuncionario(ctx context.Context, id string, idF string) (err error) {
+func (p *pgCasoRepository) AsignarFuncionario(ctx context.Context, id string, idF string) (err error,mail string) {
 	var query string
 	var fechaInicio *string
+	
 
-	query = `update casos set funcionario_id = $1,fecha_inicio = $2,updated_on = $3 where id = $4 returning (fecha_inicio)`
-	err = p.Conn.QueryRowContext(ctx, query, idF, time.Now(), time.Now(), id).Scan(&fechaInicio)
+	query = `update casos set funcionario_id = $1,fecha_inicio = $2,updated_on = $3,estado = 1
+	 where id = $4 returning (fecha_inicio,email)`
+	err = p.Conn.QueryRowContext(ctx, query, idF, time.Now(), time.Now(), id).Scan(&fechaInicio,&mail)
 	log.Println(fechaInicio)
 	if err != nil {
 		return
@@ -121,7 +123,7 @@ func (p *pgCasoRepository) AsignarFuncionario(ctx context.Context, id string, id
 
 	// }
 	// query = `update casos set fecha_iniciap`
-	return err
+	return 
 }
 
 func (p *pgCasoRepository) GetCasoCliente(ctx context.Context, id string) (res caso.Caso, err error) {
@@ -430,6 +432,9 @@ func (p *pgCasoRepository) GetMessagesCaso(ctx context.Context, casoId string) (
 
 	return
 }
+
+
+
 func (p *pgCasoRepository) fetchMessages(ctx context.Context, query string, args ...interface{}) (result []ws.Message, err error) {
 	rows, err := p.Conn.QueryContext(p.Context, query, args...)
 	if err != nil {

@@ -3,29 +3,43 @@ package ucases
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"html/template"
 	"log"
 	"soporte-go/core/model"
 	"soporte-go/core/model/caso"
 	"soporte-go/core/model/user"
+	_util "soporte-go/core/model/util"
 	"soporte-go/core/reportes/excel"
 	"soporte-go/core/reportes/html"
 	"soporte-go/core/reportes/pdf"
+	"strconv"
 	"time"
+
+	"github.com/spf13/viper"
+
+	"gopkg.in/gomail.v2"
 )
 
 type casoUseCase struct {
 	casoRepo       caso.CasoRepository
 	contextTimeout time.Duration
 	util           model.Util
+	gomailAuth     *gomail.Dialer
+	utilRepo _util.UtilRepository
 }
 
-func NewCasoUseCase(uc caso.CasoRepository, timeout time.Duration, util model.Util) caso.CasoUseCase {
+func NewCasoUseCase(uc caso.CasoRepository, timeout time.Duration, util model.Util,
+	m *gomail.Dialer,utilRepo _util.UtilRepository) caso.CasoUseCase {
 	return &casoUseCase{
 		casoRepo:       uc,
 		contextTimeout: timeout,
 		util:           util,
+		gomailAuth: m,
+		utilRepo: utilRepo,
 	}
 }
+
 
 func (uc *casoUseCase) GetUsuariosCaso(ctx context.Context, cId string) (res []user.UserForList, err error) {
 	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
@@ -103,7 +117,9 @@ func (uc *casoUseCase) FinalizarCaso(ctx context.Context, fD *caso.FinalizacionD
 func (uc *casoUseCase) AsignarFuncionario(ctx context.Context, id string, idF string) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, uc.contextTimeout)
 	defer cancel()
-	err = uc.casoRepo.AsignarFuncionario(ctx, id, idF)
+	err,mail := uc.casoRepo.AsignarFuncionario(ctx, id, idF)
+	log.Println(mail)
+	// uc.sendEmail([]string{mail},"")
 	return
 }
 
@@ -196,6 +212,18 @@ func (uc *casoUseCase) CreateCaso(ctx context.Context, cas *caso.Caso, id string
 			log.Println(err)
 			return
 		}
+		go func() {
+			ctxB := context.Background()
+			ctx,cancel  := context.WithTimeout(ctxB,uc.contextTimeout)
+			defer cancel()
+			d,_ := uc.utilRepo.GetEmailFromUserCasos(ctx,*cas.Area,id)
+			m:= make([]string,len(d.Mails))
+			for i,v := range d.Mails {
+				m[i] = v.Mail
+			}
+			uc.sendEmail(m,fmt.Sprintf(`%s/casos/%s?r=%s`, viper.GetString("CLIENT_URL"),cas.Id,strconv.Itoa(rol)),
+			d.UsuarioName + " "+ d.UsuarioApellido,d.Area,d.Entidad)
+		}()
 	} else if uc.util.IsFuncionarioRol(rol) {
 		err = uc.casoRepo.CreateCasoFuncionario(ctx, cas, id, emI, rol)
 		if err != nil {
@@ -203,4 +231,48 @@ func (uc *casoUseCase) CreateCaso(ctx context.Context, cas *caso.Caso, id string
 		}
 	}
 	return
+}
+
+
+func (uc *casoUseCase) sendEmail(emails []string, url string,user string,area string,entidad string) {
+	log.Println(emails)
+	// mails := []string{"diegoarmando12ab34cd@gmail.com"}
+	go func() {
+		t, _ := template.ParseFiles("templates/new_caso.html")
+		var body bytes.Buffer
+		t.Execute(&body, struct {
+			URL string
+			USUARIO string
+			AREA string
+			ENTIDAD string
+		}{
+			URL: url,
+			USUARIO:user,
+			AREA:area,
+			ENTIDAD:entidad,
+		})
+		m := gomail.NewMessage()
+	
+		m.SetHeader("From", "jmiranda@teclu.com")
+		m.SetHeader("To", emails...)
+		// m.SetAddressHeader("Cc", "dan@example.com", "Dan")
+		m.SetHeader("Subject", "Se ha creado un nuevo caso")
+		m.SetBody("text/html", body.String())
+		// m.Attach("/home/Alex/lolcat.jpg")
+
+		// d := gomail.NewDialer("mail.teclu.com", 25, "jmiranda@teclu.com", "jmiranda2022")
+		if err := uc.gomailAuth.DialAndSend(m); err != nil {
+			log.Println("Error sending email",err)
+		}
+
+		// // headers := "MIME-version: 1.0;\nContent-Type: text/html;"
+		// mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+		// body.Write([]byte(fmt.Sprintf("Subject: yourSubject\n%s\n\n", mimeHeaders)))
+		// // msg :=[]byte("Hello! I'm trying out smtp to send emails to recipients.")
+
+		// err := smtp.SendMail("mail.teclu.com:25", a.smtpAuth, "jmiranda@teclu.com", mails, body.Bytes())
+		// if err != nil{
+		// 	log.Println(err)
+		// }
+	}()
 }

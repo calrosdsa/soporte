@@ -8,9 +8,11 @@ import (
 type RoleHandler struct {
 }
 
+
 func NewUtil() model.Util {
 	return &RoleHandler{}
 }
+
 
 func (r *RoleHandler) IsCliente(rol int) (b bool) {
 	return int(model.RoleCliente) == rol

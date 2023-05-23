@@ -21,10 +21,16 @@ type RegisterAuthResponse struct {
 	User   user.ClienteResponse `json:"user"`
 }
 
+type PasswordUpdate struct {
+	Mail            string `json:"mail"`
+	CurrentPassword string `json:"current_password"`
+	NewPassword     string `json:"new_password"`
+}
+
 type RegisterForm struct {
-	Nombre     string `json:"nombre,omitempty"`
-	Apellido     string `json:"apellido,omitempty"`
-	Password   string `json:"password"`
+	Nombre     string  `json:"nombre,omitempty"`
+	Apellido   string  `json:"apellido,omitempty"`
+	Password   string  `json:"password"`
 	EmpresaId  int     `json:"empresa_id,omitempty"`
 	SuperiorId *string `json:"superior_id"`
 	Email      string  `json:"email"`
@@ -52,6 +58,9 @@ type AccountUseCase interface {
 	// RegisterFuncionario(context.Context, *RegisterForm) (user.UserAuth, error)
 	DeleteUser(context.Context, string) (err error)
 	RegisterUser(ctx context.Context, form *RegisterForm) (user.UserAuth, error)
+
+	UpdatePassword(ctx context.Context, d PasswordUpdate) (err error)
+	SendEmailResetPassword(email string, url string)
 }
 
 // ArticleRepository represent the article's repository contract
@@ -63,4 +72,5 @@ type AccountRepository interface {
 	RegisterFuncionario(ctx context.Context, a *RegisterForm) (user.UserAuth, error)
 	DeleteUser(context.Context, string) (err error)
 	// ValidateInvitation(ctx context.Context,mail *string,rol *int)(error)
+	UpdatePassword(ctx context.Context, d PasswordUpdate) (err error)
 }

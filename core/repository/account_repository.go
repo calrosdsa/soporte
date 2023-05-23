@@ -28,6 +28,27 @@ func NewPgAccountRepository(conn *sql.DB, ctx context.Context) account.AccountRe
 	}
 }
 
+func (p *pgAccountRepository) UpdatePassword(ctx context.Context,d account.PasswordUpdate)(err error){
+	var query string
+	var userId string
+	query = `select user_id from users where email = $1 and password = crypt($2, password);`
+	err =  p.Conn.QueryRowContext(ctx,query,d.Mail,d.CurrentPassword).Scan(&userId)
+	if err != nil{
+		log.Println("error1",err)
+		return errors.New("no se encontró ninguna cuenta con la contraseña proporcionada")
+	}
+	// log.Println(userId)
+	// log.Println(d.NewPassword)
+	query = `UPDATE users SET password = crypt($1,gen_salt('bf')) where user_id = $2`
+	// query = `update users set password = crypt(, gen_salt('bf'));`
+
+	_,err= p.Conn.ExecContext(ctx,query,d.NewPassword,userId)
+	if err != nil {
+		log.Println(err)
+	}
+	return
+}
+
 func (p *pgAccountRepository) DeleteUser(ctx context.Context, id string) (err error) {
 	// query := `update users set estado = $1 where user_id = $2;`
 	// query2 := `update clientes set estado = $1 where user_id = $2;`

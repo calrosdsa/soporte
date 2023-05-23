@@ -60,9 +60,10 @@ func InitServer(db *pgxpool.Pool, db2 *sql.DB, ctx context.Context, sess *sessio
 
 	timeoutContext := time.Duration(15) * time.Second
 	accountRepository := _repository.NewPgAccountRepository(db2, ctx)
-	accountUseCase := _uCase.NewAccountUseCase(accountRepository, timeoutContext, util)
+	accountUseCase := _uCase.NewAccountUseCase(accountRepository, timeoutContext, util,gomailAuth)
 	_account.NewAccountHandler(e, accountUseCase)
 
+	utilRepository := _repository.NewPgUtilRepository(db2)
 	//user
 	userRepository := _repository.NewPgUserRepository(db2, ctx)
 	userUseCase := _uCase.NewUserUseCases(userRepository, timeoutContext, gomailAuth, util)
@@ -70,13 +71,20 @@ func InitServer(db *pgxpool.Pool, db2 *sql.DB, ctx context.Context, sess *sessio
 
 	//caso
 	casoRepository := _r_caso.NewPgCasoRepository(db2, ctx)
-	casoUseCase := _uCase.NewCasoUseCase(casoRepository, timeoutContext, util)
+	casoUseCase := _uCase.NewCasoUseCase(casoRepository, timeoutContext, util,gomailAuth,utilRepository)
 	_caso.NewCasoHandler(e, casoUseCase)
 
+	
+	
 	//empresa
 	empresaRepository := _repository.NewPgEmpresaRepository(db2, ctx)
 	empresaUseCase := _uCase.NewEmpresaUseCase(empresaRepository, timeoutContext, util)
 	_empresa.NewEmpresaHandler(e, empresaUseCase)
+
+	//caso
+	casoDataRepository := _r_caso.NewCasoDataRepository(db2)
+	casoDataUseCase := _uCase.NewCasoDataUseCase(casoDataRepository,empresaRepository, timeoutContext)
+	_caso.NewCasoDataHandler(e, casoDataUseCase)
 
 	//media
 	mediaRepository := _repository.NewMediaRepository(db2, ctx)

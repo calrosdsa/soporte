@@ -82,12 +82,13 @@ func (p *pgEmpresaRepository) AddUserToArea(ctx context.Context, id string, a *e
 	return
 }
 
-// Lista todos los user_area
+// Lista todos los proyectos de un usuario
 func (p *pgEmpresaRepository) GetAreasUser(ctx context.Context, userId string) (res []empresa.AreaUser, err error) {
-
 	query1 := `select area_id,nombre_area,estado from user_area where user_id = $1;`
 	res, err = p.fetchAreasUser(ctx, query1, userId)
+	log.Println("REQUESTING")
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 	return
@@ -115,15 +116,6 @@ func (p *pgEmpresaRepository) GetFuncionariosByAreaId(ctx context.Context, areaI
 
 func (p *pgEmpresaRepository) GetProyectoFromUserArea(ctx context.Context, id string) (res []empresa.Area, err error) {
 	query := `select area_id,nombre_area,estado,(0),created_on,user_id from user_area where user_id = $1`
-	res, err = p.fetchAreas(ctx, query, id)
-	if err != nil {
-		return
-	}
-	return
-}
-
-func (p *pgEmpresaRepository) GetProyectosFuncionario(ctx context.Context, id string) (res []empresa.Area, err error) {
-	query := `select id,nombre,estado,empresa_id,created_on,creador_id from proyectos where creador_id = $1`
 	res, err = p.fetchAreas(ctx, query, id)
 	if err != nil {
 		return

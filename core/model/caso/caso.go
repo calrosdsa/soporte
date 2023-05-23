@@ -76,37 +76,8 @@ type Caso struct {
 	// UsuariosCaso          []user.UserForList `json:"users"`
 }
 
-type CasoRepository interface {
-	GetCasoCliente(ctx context.Context, id string) (Caso, error)
-	GetCasoFuncionario(ctx context.Context, id string) (Caso, error)
 
-	GetCasosCountCliente(ctx context.Context, id string) (int, error)
-	GetCasosCountFuncionario(ctx context.Context, id string) (int, error)
-	GetCasosCountbySuperiorId(ctx context.Context, id string) (int, error)
-	GetCasosCount(ctx context.Context) (int, error)
 
-	GetCasosFuncionario(ctx context.Context, id string, q *CasoQuery) ([]Caso, error)
-	GetCasosCliente(ctx context.Context, id string, q *CasoQuery) ([]Caso, error)
-
-	GetCasosFromUserCaso(ctx context.Context, id string, q *CasoQuery) ([]Caso, error)
-
-	GetAllCasosUserFuncionario(ctx context.Context, id int, q *CasoQuery) ([]Caso, error)
-	GetAllCasosUserCliente(ctx context.Context, id string, q *CasoQuery) ([]Caso, error)
-	UpdateCaso(ctx context.Context, c *Caso) error
-	AsignarFuncionario(ctx context.Context, id string, idF string) error
-	FinalizarCaso(ctx context.Context, fD *FinalizacionDetail) error
-	// UploadRecurso(ctx context.Context)
-	GetCasosCliForReporte(ctx context.Context, options *CasoReporteOptions) ([]Caso, error)
-	GetCasosFunForReporte(ctx context.Context, options *CasoReporteOptions) ([]Caso, error)
-
-	CreateCasoCliente(ctx context.Context, cas *Caso, id string, emI int, rol int) (err error)
-	CreateCasoFuncionario(ctx context.Context, cas *Caso, id string, emI int, rol int) (err error)
-
-	AsignarFuncionarioSoporte(ctx context.Context, id string, uId string) (err error)
-	GetUsuariosCaso(ctx context.Context, cId string) (res []user.UserForList, err error)
-
-	GetMessagesCaso(ctx context.Context,id string)(res []ws.Message,err error)
-}
 
 type CasoUseCase interface {
 	GetCaso(ctx context.Context, id string, rol int) (res Caso, err error)
@@ -127,6 +98,44 @@ type CasoUseCase interface {
 	GetReporteCasos(ctx context.Context, t model.FileType, options *CasoReporteOptions) (b bytes.Buffer, err error)
 	GetReporteCaso(ctx context.Context, t model.FileType,c Caso) (b bytes.Buffer, err error)
 
+	// SendEmail(m []string,url string) 
+
+	// SendEmailNotification(ctx context.Context,m []string)(err error)
+	
 	// GetMessagesCaso(ctx context.Context,id string)(res []ws.Message,err error)
 	// CerrarCaso(ctx context.Context,id string)(error)
 }
+
+	type CasoRepository interface {
+		// GetEmailFromUserCasos(ctx context.Context,id string)(mails []string,err error)
+
+
+		GetCasoCliente(ctx context.Context, id string) (Caso, error)
+		GetCasoFuncionario(ctx context.Context, id string) (Caso, error)
+	
+		GetCasosCountCliente(ctx context.Context, id string) (int, error)
+		GetCasosCountFuncionario(ctx context.Context, id string) (int, error)
+		GetCasosCountbySuperiorId(ctx context.Context, id string) (int, error)
+		GetCasosCount(ctx context.Context) (int, error)
+	
+		GetCasosFuncionario(ctx context.Context, id string, q *CasoQuery) ([]Caso, error)
+		GetCasosCliente(ctx context.Context, id string, q *CasoQuery) ([]Caso, error)
+	
+		GetCasosFromUserCaso(ctx context.Context, id string, q *CasoQuery) ([]Caso, error)
+	
+		GetAllCasosUserFuncionario(ctx context.Context, id int, q *CasoQuery) ([]Caso, error)
+		GetAllCasosUserCliente(ctx context.Context, id string, q *CasoQuery) ([]Caso, error)
+		UpdateCaso(ctx context.Context, c *Caso) error
+		AsignarFuncionario(ctx context.Context, id string, idF string) (err error,mail string)
+		FinalizarCaso(ctx context.Context, fD *FinalizacionDetail) error
+		// UploadRecurso(ctx context.Context)
+		GetCasosCliForReporte(ctx context.Context, options *CasoReporteOptions) ([]Caso, error)
+		GetCasosFunForReporte(ctx context.Context, options *CasoReporteOptions) ([]Caso, error)
+		CreateCasoCliente(ctx context.Context, cas *Caso, id string, emI int, rol int) (err error)
+		CreateCasoFuncionario(ctx context.Context, cas *Caso, id string, emI int, rol int) (err error)
+	
+		AsignarFuncionarioSoporte(ctx context.Context, id string, uId string) (err error)
+		GetUsuariosCaso(ctx context.Context, cId string) (res []user.UserForList, err error)
+	
+		GetMessagesCaso(ctx context.Context,id string)(res []ws.Message,err error)
+	}

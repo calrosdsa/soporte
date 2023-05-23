@@ -43,7 +43,7 @@ create table if not exists funcionarios (
 CREATE TABLE users (
     user_id uuid DEFAULT uuid_generate_v4 (),
     username VARCHAR ( 50 ) UNIQUE NOT NULL,
-    password TEXT NOT NULL,
+    password VARCHAR NOT NULL,
     created_on TIMESTAMP NOT NULL,
     last_login TIMESTAMP,
     email VARCHAR ( 50 ) UNIQUE NOT NULL,
